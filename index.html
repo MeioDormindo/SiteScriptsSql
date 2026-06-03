@@ -1,475 +1,324 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL Script Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config={theme:{extend:{colors:{base:'#080c0a',surface:'#0f1613',raised:'#182220',edge:'#1e3028',mint:{DEFAULT:'#10b981',light:'#34d399',dark:'#059669',dim:'#064e3b'},pale:'#e2ebe5',smoke:'#5e756a'},fontFamily:{mono:['"JetBrains Mono"','monospace'],sans:['"Outfit"','sans-serif']}}}}
-    </script>
-    <style>
-        *{box-sizing:border-box}body{overflow:hidden}
-        ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1e3028;border-radius:3px}::-webkit-scrollbar-thumb:hover{background:#2a4038}
-        .grid-bg{background-image:radial-gradient(ellipse at 15% 50%,rgba(16,185,129,.05) 0%,transparent 55%),radial-gradient(ellipse at 85% 15%,rgba(16,185,129,.03) 0%,transparent 45%),linear-gradient(rgba(16,185,129,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,.025) 1px,transparent 1px);background-size:100% 100%,100% 100%,48px 48px,48px 48px}
-        @keyframes fiu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes ti{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
-        @keyframes too{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(100%)}}
-        @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
-        @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
-        .anim-fiu{animation:fiu .3s ease-out both}.anim-ti{animation:ti .3s ease-out}.anim-too{animation:too .3s ease-in forwards}
-        .si{transition:background .12s,border-color .12s}.si:hover{background:#182220}.si.act{background:#182220;border-left-color:#10b981!important}
-        .ln{line-height:1.65;font-size:13px}.et{line-height:1.65;font-size:13px;tab-size:4}
-        .fc{transition:all .12s}.fc.on{background:#064e3b;color:#34d399;border-color:#10b981}
-        .b-SELECT{background:#1e3a5f;color:#60a5fa}.b-INSERT{background:#064e3b;color:#34d399}.b-UPDATE{background:#451a03;color:#fbbf24}
-        .b-DELETE{background:#450a0a;color:#f87171}.b-CREATE{background:#083344;color:#22d3ee}.b-ALTER{background:#431407;color:#fb923c}
-        .b-DROP{background:#450a0a;color:#dc2626}.b-GRANT{background:#2e1065;color:#a78bfa}.b-EXEC{background:#134e4a;color:#2dd4bf}
-        .b-BLOCK{background:#1a1a2e;color:#818cf8}.b-SET{background:#1c1917;color:#a8a29e}.b-USE{background:#1c1917;color:#a8a29e}
-        .b-OTHER{background:#1f2937;color:#9ca3af}
-        textarea{resize:none}.fr:focus-visible{outline:2px solid #10b981;outline-offset:-2px}
-        .sd{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
-        .sd-ok{background:#10b981;box-shadow:0 0 6px #10b98166}.sd-w{background:#fbbf24;box-shadow:0 0 6px #fbbf2466}
-        .sd-e{background:#f87171;box-shadow:0 0 6px #f8717166}.sd-o{background:#4b5563}
-        .sb{background:linear-gradient(90deg,#064e3b,#0f1613 40%,#0f1613 60%,#064e3b)}
-        .err-shake{animation:shake .4s ease-in-out}
-        .file-chip{background:#0f1613;border:1px solid #1e3028;border-radius:6px;padding:4px 8px;font-size:10px;color:#5e756a;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s;max-width:100%;overflow:hidden}
-        .file-chip:hover{border-color:#10b981;color:#34d399}
-        .file-chip .fn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
-        @media(max-width:767px){main.ms aside{display:none}main:not(.ms) .es{display:none}aside{width:100%!important;border-right:none!important}}
-        @media(min-width:768px){.mb{display:none!important}}
-        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Script Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+[data-theme="dark"]{--bg0:#08080a;--bg1:#0e0e12;--bg2:#151519;--bg3:#1c1c22;--bg4:#24242c;--bdr:#2a2a34;--bdr2:#35354a;--tx0:#ededf2;--tx1:#a0a0b8;--tx2:#606078;--tx3:#404058;--acc:#d4943a;--acc2:#e8a848;--acc-bg:rgba(212,148,58,.08);--red:#e04050;--red-bg:rgba(224,64,80,.08);--grn:#30b868;--shd:0 2px 12px rgba(0,0,0,.4);--shd2:0 8px 32px rgba(0,0,0,.5);--ovl:rgba(0,0,0,.65);--sb:#2a2a34;--sb2:#3a3a4a}
+[data-theme="light"]{--bg0:#f0f0f4;--bg1:#f8f8fa;--bg2:#ffffff;--bg3:#f5f5f8;--bg4:#eaeaef;--bdr:#d8d8e0;--bdr2:#c0c0cc;--tx0:#18181e;--tx1:#585868;--tx2:#888898;--tx3:#b0b0be;--acc:#b07818;--acc2:#986810;--acc-bg:rgba(176,120,24,.07);--red:#c82838;--red-bg:rgba(200,40,56,.07);--grn:#1a8840;--shd:0 2px 12px rgba(0,0,0,.06);--shd2:0 8px 32px rgba(0,0,0,.1);--ovl:rgba(0,0,0,.25);--sb:#d0d0d8;--sb2:#b8b8c4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg0);color:var(--tx0);height:100vh;overflow:hidden;transition:background .3s,color .3s}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--sb);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--sb2)}
+input,textarea,select,button{font-family:inherit;font-size:inherit}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--bdr);background:var(--bg3);color:var(--tx0);cursor:pointer;transition:all .15s;font-weight:500;white-space:nowrap;font-size:13px}
+.btn:hover{background:var(--bg4);border-color:var(--bdr2)}.btn-accent{background:var(--acc);border-color:var(--acc);color:#fff}.btn-accent:hover{background:var(--acc2);border-color:var(--acc2)}
+.btn-danger{background:var(--red-bg);border-color:var(--red);color:var(--red)}.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:6px}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--tx1)}.btn-ghost:hover{background:var(--bg3);color:var(--tx0)}
+.inp{width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--bdr);background:var(--bg1);color:var(--tx0);outline:none;transition:border .15s}.inp:focus{border-color:var(--acc)}.inp::placeholder{color:var(--tx3)}
+select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238080a0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+.label{display:block;font-size:11px;font-weight:600;color:var(--tx1);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.card:hover{border-color:var(--bdr2);box-shadow:var(--shd);transform:translateY(-1px)}
+.card-bar{position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity .2s;border-radius:12px 12px 0 0}.card:hover .card-bar{opacity:1}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.modal-overlay{position:fixed;inset:0;background:var(--ovl);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}.modal-overlay.active{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;box-shadow:var(--shd2);width:92%;max-width:720px;max-height:85vh;display:flex;flex-direction:column;transform:translateY(10px);transition:all .25s}.modal-overlay.active .modal{transform:translateY(0)}
+.modal.modal-fs{width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;border:none}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.modal-body{padding:20px;overflow-y:auto;flex:1}.modal-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--bdr);flex-shrink:0}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .15s;color:var(--tx1);font-size:13px;font-weight:500;user-select:none}
+.sidebar-item:hover{background:var(--bg3);color:var(--tx0)}.sidebar-item.active{background:var(--acc-bg);color:var(--acc)}
+.sidebar-item .cnt{margin-left:auto;font-size:11px;color:var(--tx2);font-weight:400}
+.sidebar-section{padding:4px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--tx3);margin-top:12px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shd2);animation:toastIn .3s ease;max-width:360px;pointer-events:all}
+.toast-success{background:#1a3a28;border:1px solid #2a5a3a;color:#60d890}.toast-error{background:#3a1a1a;border:1px solid #5a2a2a;color:#f08080}.toast-info{background:#1a2a3a;border:1px solid #2a3a5a;color:#80b0f0}
+[data-theme="light"] .toast-success{background:#e8f5ee;border-color:#b8e0c8;color:#1a7040}
+[data-theme="light"] .toast-error{background:#fde8e8;border-color:#f0b8b8;color:#a02020}
+[data-theme="light"] .toast-info{background:#e8f0fd;border-color:#b8d0f0;color:#2060a0}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+.sql-kw{color:#e0a050;font-weight:600}.sql-str{color:#60c878}.sql-num{color:#60a8e0}.sql-cmt{color:#505068;font-style:italic}.sql-fn{color:#c890e0}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.icon-btn{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;border:none;background:transparent;color:var(--tx2);cursor:pointer;transition:all .15s;flex-shrink:0}.icon-btn:hover{background:var(--bg4);color:var(--tx0)}
+.confirm-overlay{position:fixed;inset:0;background:var(--ovl);z-index:150;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}.confirm-overlay.active{opacity:1;pointer-events:all}
+.confirm-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:24px;box-shadow:var(--shd2);max-width:400px;width:90%;text-align:center}
+.ctx-menu{position:fixed;z-index:120;background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;box-shadow:var(--shd2);padding:4px;min-width:160px;animation:ctxIn .12s ease}
+.ctx-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--tx1);transition:all .1s}.ctx-item:hover{background:var(--bg3);color:var(--tx0)}
+.ctx-item.danger{color:var(--red)}.ctx-item.danger:hover{background:var(--red-bg)}
+@keyframes ctxIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:12px}
+.folder-tree{padding-left:14px}
+.code-edit{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;flex:1;min-height:0;border-radius:10px;border:1px solid var(--bdr);background:var(--bg1);color:var(--tx0);padding:16px;outline:none;resize:none;transition:border .15s}.code-edit:focus{border-color:var(--acc)}
+.view-meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2);padding:4px 10px;background:var(--bg1);border-radius:6px;border:1px solid var(--bdr)}
+.view-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(max-width:768px){#sidebar{position:fixed;left:-280px;z-index:50;transition:left .3s;height:calc(100vh - 52px);background:var(--bg1)}#sidebar.open{left:0}.mob-ovl{position:fixed;inset:0;background:var(--ovl);z-index:49;display:none}.mob-ovl.active{display:block}.hide-m{display:none!important}}
+</style>
 </head>
-<body class="bg-base text-pale font-sans h-screen flex flex-col grid-bg">
-
-<div id="T" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
-<div id="SB" class="hidden sb border-b border-mint/20 px-4 py-2.5 flex items-center gap-3 z-10 shrink-0">
-    <i class="fa-solid fa-arrows-rotate text-mint text-sm" style="animation:pulse 2s infinite"></i>
-    <span id="SBm" class="text-sm text-mint-light flex-1"></span>
-    <button onclick="q('#SB').classList.add('hidden')" class="text-smoke hover:text-pale text-xs"><i class="fa-solid fa-xmark"></i></button>
+<body>
+<div id="app" style="display:flex;flex-direction:column;height:100vh">
+  <header style="height:52px;border-bottom:1px solid var(--bdr);background:var(--bg1);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0;z-index:40">
+    <button class="icon-btn" id="menuBtn" onclick="toggleSidebar()" style="display:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+    <div style="display:flex;align-items:center;gap:8px;margin-right:4px;flex-shrink:0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6"/></svg>
+      <span style="font-weight:700;font-size:14px;letter-spacing:-.3px" class="hide-m">SQL Script Manager</span>
+    </div>
+    <div style="flex:1;max-width:340px;margin:0 auto;position:relative">
+      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx3)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input class="inp" id="searchInput" style="padding-left:32px;height:34px;font-size:13px;border-radius:20px" oninput="onSearch(this.value)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+      <button class="btn btn-sm" onclick="openNewScript()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg><span class="hide-m" data-t="newScript"></span></button>
+      <button class="btn btn-sm" onclick="importTxtScript()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg><span class="hide-m" data-t="importTxt"></span></button>
+      <div style="width:1px;height:18px;background:var(--bdr);margin:0 2px"></div>
+      <button class="btn btn-sm" onclick="importDatabase()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="hide-m" data-t="importDB"></span></button>
+      <button class="btn btn-sm btn-accent" onclick="exportDatabase()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="hide-m" data-t="backupDB"></span></button>
+      <button class="btn btn-sm" onclick="syncRemote()" id="syncBtn" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+      <div style="width:1px;height:18px;background:var(--bdr);margin:0 2px"></div>
+      <button class="btn btn-sm btn-ghost" onclick="toggleLang()" id="langBtn" style="min-width:34px;justify-content:center;font-weight:700;font-size:11px">PT</button>
+      <button class="btn btn-sm btn-ghost" onclick="toggleTheme()" style="min-width:34px;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+      <button class="btn btn-sm btn-ghost" onclick="openSettings()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+  </header>
+  <div style="display:flex;flex:1;overflow:hidden">
+    <div class="mob-ovl" id="mobOvl" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" style="width:256px;border-right:1px solid var(--bdr);background:var(--bg1);overflow-y:auto;flex-shrink:0;padding:10px 6px"><div id="sidebarContent"></div></aside>
+    <main id="mainContent" style="flex:1;overflow-y:auto;padding:20px;background:var(--bg0)"></main>
+  </div>
 </div>
-<div id="CM" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-surface border border-edge rounded-xl p-6 max-w-sm w-full mx-4 anim-fiu shadow-2xl">
-        <h3 id="CMt" class="text-lg font-bold mb-2"></h3>
-        <p id="CMm" class="text-smoke text-sm mb-6 leading-relaxed"></p>
-        <div class="flex gap-3 justify-end">
-            <button onclick="hCM()" class="px-4 py-2 rounded-lg text-sm font-medium text-smoke hover:text-pale border border-edge hover:border-smoke transition-colors fr">Cancelar</button>
-            <button id="CMy" class="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white transition-colors fr">Confirmar</button>
-        </div>
-    </div>
-</div>
-<div id="SM" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-surface border border-edge rounded-xl p-6 max-w-lg w-full mx-4 anim-fiu shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-5">
-            <h3 class="text-lg font-bold">Configurar Sincronizacao</h3>
-            <button onclick="q('#SM').classList.add('hidden')" class="w-8 h-8 rounded-lg hover:bg-raised text-smoke hover:text-pale flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="space-y-4">
-            <div><label class="block text-xs font-semibold text-smoke mb-1.5">URL do Banco Remoto</label>
-            <input type="url" id="SU" placeholder="https://exemplo.com/scripts-backup.json" class="w-full h-10 px-3 bg-base border border-edge rounded-lg text-sm text-pale placeholder-smoke/30 focus:border-mint focus:outline-none font-mono text-xs fr">
-            <p class="text-[10px] text-smoke/50 mt-1.5 leading-relaxed">URL de um arquivo JSON exportado por outra instancia. Hospede em GitHub Pages, Netlify, S3, etc.</p></div>
-            <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg bg-raised/50 border border-edge/50 hover:border-edge transition-colors">
-                <input type="checkbox" id="SA" class="accent-emerald-500 w-4 h-4 mt-0.5 shrink-0">
-                <div><span class="text-sm font-medium text-pale">Sincronizar automaticamente ao abrir</span><p class="text-[11px] text-smoke/60 mt-0.5">Busca alteracoes no servidor e combina com o banco local</p></div>
-            </label>
-            <div id="SL" class="hidden p-3 rounded-lg bg-base border border-edge/50">
-                <p class="text-[10px] text-smoke/50 uppercase tracking-widest font-semibold mb-1">Ultima Sincronizacao</p>
-                <p id="SLt" class="text-xs text-pale leading-relaxed"></p>
-            </div>
-            <div class="flex gap-2 pt-2">
-                <button onclick="testSync()" id="STb" class="h-9 px-4 rounded-lg text-xs font-semibold border border-edge hover:border-smoke text-smoke hover:text-pale transition-colors flex items-center gap-2 fr"><i class="fa-solid fa-plug text-[10px]"></i> Testar</button>
-                <div class="flex-1"></div>
-                <button onclick="q('#SM').classList.add('hidden')" class="h-9 px-4 rounded-lg text-xs font-medium border border-edge hover:border-smoke text-smoke hover:text-pale transition-colors fr">Cancelar</button>
-                <button onclick="saveCfg()" class="h-9 px-5 rounded-lg text-xs font-semibold bg-mint hover:bg-mint-light text-base transition-colors fr">Salvar</button>
-            </div>
-        </div>
-    </div>
-</div>
-<input type="file" id="IF" class="hidden" accept=".json">
-
-<header class="h-14 border-b border-edge flex items-center px-4 gap-3 shrink-0 bg-surface/80 backdrop-blur-md z-10">
-    <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-mint/10 flex items-center justify-center"><i class="fa-solid fa-database text-mint text-sm"></i></div>
-        <h1 class="text-base font-extrabold tracking-tight hidden sm:block">SQL Script Manager</h1>
-        <h1 class="text-base font-extrabold tracking-tight sm:hidden">SQL Manager</h1>
-    </div>
-    <div id="StB" class="hidden md:flex items-center gap-2 ml-2"></div>
-    <div class="flex-1"></div>
-    <div id="SSw" class="hidden md:flex items-center gap-1.5 mr-1 cursor-pointer" onclick="openCfg()" title="Configurar sincronizacao">
-        <span id="SD" class="sd sd-o"></span><span id="SLbl" class="text-[10px] text-smoke/60">Offline</span>
-    </div>
-    <div class="flex items-center gap-1.5">
-        <button onclick="addNew()" class="h-8 px-3 rounded-lg text-xs font-semibold bg-mint hover:bg-mint-light text-base transition-colors flex items-center gap-1.5 fr" title="Ctrl+N"><i class="fa-solid fa-plus text-[10px]"></i><span class="hidden sm:inline">Novo</span></button>
-        <button onclick="quickSave()" id="SvAllB" class="h-8 px-3 rounded-lg text-xs font-medium border border-edge hover:border-mint text-smoke hover:text-mint transition-colors flex items-center gap-1.5 fr" title="Salvar no arquivo (Ctrl+Shift+S)"><i class="fa-solid fa-floppy-disk text-[10px]"></i><span class="hidden lg:inline" id="SvAllL">Salvar em...</span></button>
-        <button onclick="saveAsNew()" class="h-8 px-2.5 rounded-lg text-xs text-smoke hover:text-pale hover:bg-raised transition-colors fr" title="Salvar como novo arquivo"><i class="fa-solid fa-file-circle-plus text-[10px]"></i></button>
-        <button onclick="q('#IF').click()" class="h-8 px-3 rounded-lg text-xs font-medium border border-edge hover:border-smoke text-smoke hover:text-pale transition-colors flex items-center gap-1.5 fr" title="Importar backup"><i class="fa-solid fa-upload text-[10px]"></i><span class="hidden lg:inline">Importar</span></button>
-        <button onclick="doSync()" id="SyB" class="h-8 px-3 rounded-lg text-xs font-medium border border-edge hover:border-mint text-smoke hover:text-mint transition-colors flex items-center gap-1.5 fr" title="Sincronizar agora"><i class="fa-solid fa-arrows-rotate text-[10px]"></i><span class="hidden lg:inline">Sync</span></button>
-        <button onclick="openCfg()" class="h-8 w-8 rounded-lg border border-edge hover:border-smoke text-smoke hover:text-pale transition-colors flex items-center justify-center fr" title="Config"><i class="fa-solid fa-gear text-xs"></i></button>
-        <button onclick="askClr()" class="h-8 w-8 rounded-lg border border-edge hover:border-red-500/50 text-smoke hover:text-red-400 transition-colors flex items-center justify-center fr" title="Limpar banco"><i class="fa-solid fa-trash text-xs"></i></button>
-    </div>
-</header>
-
-<main id="M" class="flex-1 flex overflow-hidden">
-    <aside class="w-72 md:w-80 border-r border-edge flex flex-col shrink-0 bg-surface/40">
-        <div class="px-3 pt-3 pb-1.5">
-            <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-smoke/50 text-[11px]"></i>
-            <input type="search" id="SeI" placeholder="Buscar scripts..." class="w-full h-8 pl-8 pr-3 bg-base border border-edge rounded-lg text-xs text-pale placeholder-smoke/40 focus:border-mint focus:outline-none fr"></div>
-        </div>
-        <div class="px-3 pb-2 flex flex-wrap gap-1" id="Ch"></div>
-        <div class="flex-1 overflow-y-auto" id="SLi"></div>
-        <div id="FC" class="hidden px-3 py-2 border-t border-edge">
-            <div class="file-chip" onclick="saveAsNew()" title="Clique para trocar arquivo">
-                <i class="fa-solid fa-file-arrow-down text-[9px] shrink-0"></i>
-                <span class="fn" id="FN"></span>
-                <i class="fa-solid fa-pen text-[8px] shrink-0 opacity-40 hover:opacity-100"></i>
-            </div>
-        </div>
-        <div id="LF" class="p-2 border-t border-edge text-center">
-            <button onclick="loadEx()" class="text-[11px] text-smoke/60 hover:text-mint transition-colors"><i class="fa-solid fa-flask text-[9px] mr-1"></i> Carregar exemplos</button>
-        </div>
-    </aside>
-    <section class="es flex-1 flex flex-col overflow-hidden">
-        <div id="EE" class="flex-1 flex items-center justify-center">
-            <div class="text-center px-6">
-                <div class="w-20 h-20 rounded-2xl bg-surface border border-edge flex items-center justify-center mx-auto mb-6"><i class="fa-solid fa-database text-3xl text-edge"></i></div>
-                <h2 class="text-xl font-bold mb-2 text-pale/70">Banco Local Vazio</h2>
-                <p class="text-smoke text-sm max-w-sm mx-auto mb-6 leading-relaxed">Crie scripts, importe um backup ou configure a sincronizacao remota</p>
-                <div class="flex gap-3 justify-center flex-wrap">
-                    <button onclick="addNew()" class="h-9 px-5 rounded-lg bg-mint hover:bg-mint-light text-base text-sm font-semibold transition-colors fr"><i class="fa-solid fa-plus mr-1.5 text-xs"></i> Novo Script</button>
-                    <button onclick="q('#IF').click()" class="h-9 px-5 rounded-lg border border-edge hover:border-smoke text-smoke hover:text-pale text-sm font-medium transition-colors fr"><i class="fa-solid fa-upload mr-1.5 text-xs"></i> Importar</button>
-                    <button onclick="loadEx()" class="h-9 px-5 rounded-lg border border-edge hover:border-smoke text-smoke hover:text-pale text-sm font-medium transition-colors fr"><i class="fa-solid fa-flask mr-1.5 text-xs"></i> Exemplo</button>
-                </div>
-            </div>
-        </div>
-        <div id="ED" class="hidden flex-1 flex flex-col overflow-hidden">
-            <div class="px-4 py-2.5 border-b border-edge flex items-center gap-3 shrink-0 bg-surface/30">
-                <button onclick="desel()" class="mb w-8 h-8 rounded-lg border border-edge hover:border-smoke text-smoke hover:text-pale flex items-center justify-center transition-colors fr"><i class="fa-solid fa-arrow-left text-xs"></i></button>
-                <input type="text" id="EN" class="flex-1 bg-transparent text-lg font-bold text-pale focus:outline-none placeholder-smoke/30 min-w-0" placeholder="Nome do script...">
-                <span id="EB" class="b-OTHER text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest shrink-0"></span>
-                <span id="EM" class="text-[11px] text-smoke hidden lg:inline shrink-0"></span>
-            </div>
-            <div class="flex-1 flex overflow-hidden">
-                <div class="ln w-10 bg-surface/60 text-smoke/40 text-right pr-2 pt-3 pl-2 overflow-hidden shrink-0 select-none font-mono border-r border-edge/60" id="LN"></div>
-                <textarea id="ET" class="et flex-1 bg-transparent text-pale/90 p-3 focus:outline-none font-mono overflow-auto" spellcheck="false" placeholder="-- Escreva seu script SQL aqui..."></textarea>
-            </div>
-            <div class="px-4 py-2 border-t border-edge flex items-center justify-between shrink-0 bg-surface/30">
-                <span id="CI" class="text-[11px] text-smoke/50 font-mono">Ln 1, Col 1</span>
-                <div class="flex items-center gap-1">
-                    <button id="SvB" onclick="saveCur()" class="h-7 px-3 rounded-md text-xs font-semibold bg-mint/10 text-mint hover:bg-mint/20 transition-colors flex items-center gap-1.5 fr" title="Ctrl+S"><i class="fa-solid fa-check text-[10px]"></i> Salvar</button>
-                    <button onclick="dupCur()" class="h-7 px-2.5 rounded-md text-xs text-smoke hover:text-pale hover:bg-raised transition-colors fr" title="Duplicar"><i class="fa-regular fa-copy"></i></button>
-                    <button onclick="cpCur()" class="h-7 px-2.5 rounded-md text-xs text-smoke hover:text-pale hover:bg-raised transition-colors fr" title="Copiar"><i class="fa-regular fa-clipboard"></i></button>
-                    <button onclick="dlCur()" class="h-7 px-2.5 rounded-md text-xs text-smoke hover:text-pale hover:bg-raised transition-colors fr" title="Download .sql"><i class="fa-solid fa-arrow-down text-[10px]"></i></button>
-                    <div class="w-px h-4 bg-edge mx-0.5"></div>
-                    <button onclick="askDel()" class="h-7 px-2.5 rounded-md text-xs text-smoke hover:text-red-400 hover:bg-red-500/10 transition-colors fr" title="Excluir"><i class="fa-regular fa-trash-can"></i></button>
-                </div>
-            </div>
-        </div>
-    </section>
-</main>
+<div class="modal-overlay" id="modalOvl" onclick="if(event.target===this)closeModal()"><div class="modal" id="modalBox"><div class="modal-head" id="mHead"></div><div class="modal-body" id="mBody"></div><div class="modal-foot" id="mFoot"></div></div></div>
+<div class="confirm-overlay" id="confirmOvl" onclick="if(event.target===this)closeConfirm()"><div class="confirm-box" id="confirmBox"></div></div>
+<div class="toast-container" id="toastC"></div>
+<div id="ctxContainer"></div>
+<input type="file" id="jsonInput" accept=".json" style="display:none">
+<input type="file" id="txtInput" accept=".txt" style="display:none">
 
 <script>
-const q=s=>document.querySelector(s);
-const D={T:q('#T'),SB:q('#SB'),SBm:q('#SBm'),CM:q('#CM'),CMt:q('#CMt'),CMm:q('#CMm'),CMy:q('#CMy'),
-SM:q('#SM'),SU:q('#SU'),SA:q('#SA'),SL:q('#SL'),SLt:q('#SLt'),STb:q('#STb'),
-StB:q('#StB'),SeI:q('#SeI'),Ch:q('#Ch'),SLi:q('#SLi'),LF:q('#LF'),FC:q('#FC'),FN:q('#FN'),
-EE:q('#EE'),ED:q('#ED'),EN:q('#EN'),EB:q('#EB'),EM:q('#EM'),
-LN:q('#LN'),ET:q('#ET'),CI:q('#CI'),SvB:q('#SvB'),M:q('#M'),
-SD:q('#SD'),SLbl:q('#SLbl'),SSw:q('#SSw'),SyB:q('#SyB'),IF:q('#IF'),
-SvAllB:q('#SvAllB'),SvAllL:q('#SvAllL')};
+var TR={
+pt:{allScripts:'Todos os Scripts',folders:'Pastas',categories:'Categorias',addFolder:'Adicionar Pasta',addCat:'Adicionar Categoria',newScript:'Novo Script',importDB:'Importar Banco',backupDB:'Backup',settings:'Configurações',search:'Buscar scripts...',noFolder:'Sem pasta',save:'Salvar',cancel:'Cancelar',delete:'Excluir',edit:'Alterar',view:'Visualizar',copy:'Copiar',copied:'Copiado!',createdAt:'Criado em',updatedAt:'Atualizado em',dupName:'Já existe um script com este nome.',emptyState:'Nenhum script encontrado',emptySub:'Crie um novo script ou importe um banco de dados',importTxt:'Importar .txt',settingsTitle:'Configurações',remoteUrl:'URL Remota do Banco',remoteUrlPh:'https://exemplo.com/database.json',autoSync:'Sincronizar automaticamente ao abrir',changeLoc:'Alterar local de backup',noLoc:'Nenhum local definido',syncOk:'Sincronização concluída',syncNew:'novos',importOk:'Banco importado com sucesso',exportOk:'Backup salvo com sucesso',scriptSaved:'Script salvo',scriptDeleted:'Script excluído',folderSaved:'Pasta salva',folderDeleted:'Pasta excluída',catSaved:'Categoria salva',catDeleted:'Categoria excluída',errImport:'Erro ao importar',errExport:'Erro ao exportar',errSync:'Erro na sincronização',errJson:'Arquivo JSON inválido',errFsApi:'Navegador não suporta (use Chrome/Edge)',parentFolder:'Pasta pai',noParent:'Nenhuma (raiz)',color:'Cor',scripts:'scripts',dark:'Escuro',light:'Claro',scriptName:'Nome do Script',folderName:'Nome da Pasta',catName:'Nome da Categoria',editScript:'Alterar Script',newScriptT:'Novo Script',editFolder:'Editar Pasta',newFolder:'Nova Pasta',editCat:'Editar Categoria',newCat:'Nova Categoria',delScript:'Excluir este script?',delFolder:'Excluir pasta "{n}"? Scripts moverão para "Sem pasta".',delCat:'Excluir categoria "{n}"? Scripts perderão a categoria.',noContent:'Nenhum conteúdo',chars:'caracteres',lines:'linhas',backupLoc:'Local do Backup',lastSync:'Última sincronização',never:'Nunca',mergeInfo:'Scripts com mesmo nome: a versão mais recente será mantida.',cycleDetected:'Ciclo detectado na hierarquia!',noFoldersYet:'Nenhuma pasta ainda',noCatLabel:'Sem categoria',category:'Categoria',folder:'Pasta',selectCat:'Selecione...',selectFolder:'Selecione...',toggleHL:'Colorir SQL'},
+en:{allScripts:'All Scripts',folders:'Folders',categories:'Categories',addFolder:'Add Folder',addCat:'Add Category',newScript:'New Script',importDB:'Import DB',backupDB:'Backup',settings:'Settings',search:'Search scripts...',noFolder:'No folder',save:'Save',cancel:'Cancel',delete:'Delete',edit:'Edit',view:'View',copy:'Copy',copied:'Copied!',createdAt:'Created at',updatedAt:'Updated at',dupName:'A script with this name already exists.',emptyState:'No scripts found',emptySub:'Create a new script or import a database',importTxt:'Import .txt',settingsTitle:'Settings',remoteUrl:'Remote Database URL',remoteUrlPh:'https://example.com/database.json',autoSync:'Auto-sync on open',changeLoc:'Change backup location',noLoc:'No location set',syncOk:'Sync completed',syncNew:'new',importOk:'Database imported successfully',exportOk:'Backup saved successfully',scriptSaved:'Script saved',scriptDeleted:'Script deleted',folderSaved:'Folder saved',folderDeleted:'Folder deleted',catSaved:'Category saved',catDeleted:'Category deleted',errImport:'Error importing',errExport:'Error exporting',errSync:'Sync error',errJson:'Invalid JSON file',errFsApi:'Browser does not support this feature (use Chrome/Edge)',parentFolder:'Parent Folder',noParent:'None (root)',color:'Color',scripts:'scripts',dark:'Dark',light:'Light',scriptName:'Script Name',folderName:'Folder Name',catName:'Category Name',editScript:'Edit Script',newScriptT:'New Script',editFolder:'Edit Folder',newFolder:'New Folder',editCat:'Edit Category',newCat:'New Category',delScript:'Delete this script?',delFolder:'Delete folder "{n}"? Scripts will move to "No folder".',delCat:'Delete category "{n}"? Scripts will lose their category.',noContent:'No content',chars:'characters',lines:'lines',backupLoc:'Backup Location',lastSync:'Last sync',never:'Never',mergeInfo:'Scripts with same name: newest version will be kept.',cycleDetected:'Cycle detected in folder hierarchy!',noFoldersYet:'No folders yet',noCatLabel:'No category',category:'Category',folder:'Folder',selectCat:'Select...',selectFolder:'Select...',toggleHL:'Color SQL'}
+};
+function t(k){return TR[S.lang][k]||k}
 
-const S={scripts:[],ctr:0,selId:null,filter:'ALL',search:'',dirty:false};
-let _u=0;const gid=()=>'s_'+Date.now()+'_'+(++_u);
+var DEF_CATS=[{name:'SELECT',color:'#4ea8de'},{name:'INSERT',color:'#48b860'},{name:'UPDATE',color:'#d4943a'},{name:'DELETE',color:'#e04050'},{name:'CREATE',color:'#8b5cf6'},{name:'ALTER',color:'#06b6d4'},{name:'DROP',color:'#ef4444'},{name:'PROCEDURE',color:'#f59e0b'},{name:'FUNCTION',color:'#10b981'},{name:'TRIGGER',color:'#ec4899'},{name:'VIEW',color:'#6366f1'},{name:'INDEX',color:'#14b8a6'},{name:'OTHER',color:'#8888a0'}];
 
-/* ========== Utilitarios ========== */
-function dT(sql){const t=sql.trim().toUpperCase();const m=[[/^SELECT\b/i,'SELECT'],[/^INSERT\b/i,'INSERT'],[/^UPDATE\b/i,'UPDATE'],[/^DELETE\b/i,'DELETE'],[/^CREATE\b/i,'CREATE'],[/^ALTER\b/i,'ALTER'],[/^DROP\b/i,'DROP'],[/^(GRANT|REVOKE)\b/i,'GRANT'],[/^(EXEC|EXECUTE)\b/i,'EXEC'],[/^(DECLARE|BEGIN|IF\b|WHILE|FOR\b|CASE)\b/i,'BLOCK'],[/^SET\b/i,'SET'],[/^USE\b/i,'USE']];for(const[r,n]of m)if(r.test(t))return n;return'OTHER'}
-function nL(s){return s?s.split('\n').length:0}
-function tr(s,n){return(!s||s.length<=n)?s:s.substring(0,n)+'…'}
-function eH(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function fL(s,n){return s?s.split('\n').slice(0,n).join('\n'):''}
-function fD(ts){return new Date(ts).toLocaleDateString('pt-BR')+' '+new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
-const hasFS='showSaveFilePicker' in window;
+/* Tokenizer SQL - caractere por caractere, sem regex sobreposta */
+var KWS=new Set('SELECT|FROM|WHERE|AND|OR|NOT|IN|LIKE|BETWEEN|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|ALTER|DROP|IF|EXISTS|PRIMARY|KEY|FOREIGN|REFERENCES|CONSTRAINT|INDEX|UNIQUE|DEFAULT|AUTO_INCREMENT|ON|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|CROSS|GROUP|BY|ORDER|HAVING|LIMIT|OFFSET|AS|DISTINCT|UNION|ALL|CASE|WHEN|THEN|ELSE|END|PROCEDURE|FUNCTION|TRIGGER|VIEW|BEGIN|COMMIT|ROLLBACK|GRANT|REVOKE|EXECUTE|EXEC|CALL|DECLARE|CURSOR|FETCH|OPEN|CLOSE|RETURN|RETURNS|OUT|INOUT|IS|NULL|TRUE|FALSE|USE|DATABASE|SCHEMA|WITH|REPLACE|RENAME|TRUNCATE|MERGE|MATCHED|OVER|PARTITION|TOP|NOLOCK|INT|VARCHAR|NVARCHAR|TEXT|BIGINT|FLOAT|DECIMAL|DATE|DATETIME|TIMESTAMP|BOOLEAN|CHAR|BLOB|CLOB|NUMERIC|IDENTITY|SERIAL|RECOMPILE'.split('|'));
+var FNS=new Set('COUNT|SUM|AVG|MIN|MAX|CONCAT|SUBSTRING|LENGTH|TRIM|UPPER|LOWER|REPLACE|COALESCE|IFNULL|ISNULL|NOW|CURDATE|DATEDIFF|DATE_ADD|DATE_FORMAT|ROUND|FLOOR|CEIL|ABS|MOD|POWER|SQRT|LEFT|RIGHT|INSTR|LOCATE|REVERSE|REPEAT|SPACE|LPAD|RPAD|CHR|ASCII|NVL|DECODE|LAG|LEAD|FIRST_VALUE|LAST_VALUE|NTILE|ROW_NUMBER|RANK|DENSE_RANK|CAST|CONVERT'.split('|'));
 
-/* ========== IndexedDB ========== */
-const DBN='SQLScriptMgr',DBV=3,TS='scripts',TC='config';
-function oDB(){return new Promise((r,j)=>{const req=indexedDB.open(DBN,DBV);req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(TS)){const st=db.createObjectStore(TS,{keyPath:'id'});st.createIndex('name','name',{unique:false});st.createIndex('ts','ts',{unique:false})}if(!db.objectStoreNames.contains(TC))db.createObjectStore(TC,{keyPath:'key'})};req.onsuccess=()=>r(req.result);req.onerror=()=>j(req.error)})}
-function dbA(){return new Promise(async(r,j)=>{const db=await oDB();const req=db.transaction(TS,'readonly').objectStore(TS).getAll();req.onsuccess=()=>r(req.result);req.onerror=()=>j(req.error)})}
-function dbP(sc){return new Promise(async(r,j)=>{const db=await oDB();const req=db.transaction(TS,'readwrite').objectStore(TS).put(sc);req.onsuccess=()=>r(req.result);req.onerror=()=>j(req.error)})}
-function dbD(id){return new Promise(async(r,j)=>{const db=await oDB();const req=db.transaction(TS,'readwrite').objectStore(TS).delete(id);req.onsuccess=()=>r();req.onerror=()=>j(req.error)})}
-function dbC(){return new Promise(async(r,j)=>{const db=await oDB();const req=db.transaction(TS,'readwrite').objectStore(TS).clear();req.onsuccess=()=>r();req.onerror=()=>j(req.error)})}
-async function cG(k,d){try{const db=await oDB();return new Promise((r,j)=>{const req=db.transaction(TC,'readonly').objectStore(TC).get(k);req.onsuccess=()=>r(req.result?req.result.value:d);req.onerror=()=>j(req.error)})}catch(e){return d}}
-async function cS(k,v){const db=await oDB();return new Promise((r,j)=>{const req=db.transaction(TC,'readwrite').objectStore(TC).put({key:k,value:v});req.onsuccess=()=>r();req.onerror=()=>j(req.error)})}
-async function reload(){S.scripts=await dbA();S.scripts.sort((a,b)=>b.ts-a.ts);S.ctr=await cG('counter',S.scripts.length)}
-
-/* ========== Nome Unico ========== */
-function fDup(n,ex){return S.scripts.find(s=>s.id!==ex&&s.name.toLowerCase()===n.toLowerCase())}
-function uName(base,ex){if(!fDup(base,ex))return base;let i=2,n;do{n=base+' ('+i+')';i++}while(fDup(n,ex));return n}
-
-/* ========== CRUD ========== */
-async function addScr(c,src){S.ctr++;await cS('counter',S.ctr);let nm=uName('Script '+S.ctr,null);const sc={id:gid(),name:nm,content:c,type:dT(c),source:src||'manual',ts:Date.now()};await dbP(sc);await reload();return sc}
-async function rmScr(id){await dbD(id);if(S.selId===id)S.selId=null;await reload()}
-async function updScr(id,u){const sc=S.scripts.find(s=>s.id===id);if(!sc)return null;if(u.name!==undefined&&u.name!==sc.name){if(fDup(u.name,id)){toast('Ja existe um script chamado "'+u.name+'"','error');return null}}Object.assign(sc,u);if(u.content!==undefined)sc.type=dT(u.content);sc.ts=Date.now();await dbP(sc);await reload();return sc}
-function filtered(){return S.scripts.filter(s=>{const mf=S.filter==='ALL'||s.type===S.filter;const ms=!S.search||s.name.toLowerCase().includes(S.search.toLowerCase())||s.content.toLowerCase().includes(S.search.toLowerCase());return mf&&ms})}
-function selScr(){return S.scripts.find(s=>s.id===S.selId)||null}
-
-/* ========== Merge ========== */
-async function merge(remote){const locMap=new Map();S.scripts.forEach(s=>locMap.set(s.name.toLowerCase(),s));let added=0,updated=0,skipped=0;const batch=[];for(const rm of remote){const lc=locMap.get(rm.name.toLowerCase());if(lc){if(rm.ts>lc.ts){rm.id=lc.id;rm.source='sync';batch.push(rm);updated++}else{skipped++}}else{rm.id=gid();rm.source='sync';batch.push(rm);added++}}for(const sc of batch)await dbP(sc);await reload();return{added,updated,skipped}}
-
-/* ========== FILE HANDLE — o coracao da persistencia de arquivo ========== */
-let _fh=null; // file handle em memoria
-let _fn='';  // nome do arquivo
-
-// Tenta recuperar o handle do IndexedDB (IndexedDB nao guarda handles nativos,
-// entao guardamos apenas o nome e pedimos permissao de novo ao abrir)
-async function initFH(){
-    _fn=await cG('fileName','');
-    upFC();
+function tokenizeSQL(sql){
+  var tokens=[],i=0,len=sql.length;
+  while(i<len){
+    if(sql[i]==='-'&&i+1<len&&sql[i+1]==='-'){var s=i;while(i<len&&sql[i]!=='\n')i++;tokens.push({t:'c',x:sql.substring(s,i)});continue}
+    if(sql[i]==='/'&&i+1<len&&sql[i+1]==='*'){var s=i;i+=2;while(i<len-1&&!(sql[i]==='*'&&sql[i+1]==='/'))i++;i+=2;tokens.push({t:'c',x:sql.substring(s,i)});continue}
+    if(sql[i]==="'"){var s=i;i++;while(i<len){if(sql[i]==="'"){i++;if(i>=len||sql[i]!=="'")break;i++}else i++}tokens.push({t:'s',x:sql.substring(s,i)});continue}
+    if(sql[i]==='"'){var s=i;i++;while(i<len&&sql[i]!=='"')i++;if(i<len)i++;tokens.push({t:'s',x:sql.substring(s,i)});continue}
+    if(sql[i]>='0'&&sql[i]<='9'&&(i===0||!/[\w]/.test(sql[i-1]))){var s=i;while(i<len&&((sql[i]>='0'&&sql[i]<='9')||sql[i]==='.'))i++;tokens.push({t:'n',x:sql.substring(s,i)});continue}
+    if((sql[i]>='a'&&sql[i]<='z')||(sql[i]>='A'&&sql[i]<='Z')||sql[i]==='_'||sql[i]==='@'){var s=i;while(i<len&&((sql[i]>='a'&&sql[i]<='z')||(sql[i]>='A'&&sql[i]<='Z')||(sql[i]>='0'&&sql[i]<='9')||sql[i]==='_'||sql[i]==='.'))i++;var w=sql.substring(s,i),u=w.toUpperCase();tokens.push({t:KWS.has(u)?'k':FNS.has(u)?'f':'p',x:w});continue}
+    tokens.push({t:'p',x:sql[i]});i++
+  }
+  return tokens;
+}
+function renderHL(sql){
+  var tk=tokenizeSQL(sql),parts=[];
+  for(var i=0;i<tk.length;i++){
+    var e=tk[i].x.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if(tk[i].t==='c')parts.push('<span class="sql-cmt">'+e+'</span>');
+    else if(tk[i].t==='s')parts.push('<span class="sql-str">'+e+'</span>');
+    else if(tk[i].t==='n')parts.push('<span class="sql-num">'+e+'</span>');
+    else if(tk[i].t==='k')parts.push('<span class="sql-kw">'+e+'</span>');
+    else if(tk[i].t==='f')parts.push('<span class="sql-fn">'+e+'</span>');
+    else parts.push(e);
+  }
+  return parts.join('');
 }
 
-// Gera o JSON de backup
-function bkData(){
-    return JSON.stringify({format:'sql-script-manager-backup',version:1,exportedAt:new Date().toISOString(),
-        scripts:S.scripts.map(s=>({id:s.id,name:s.name,content:s.content,type:s.type,source:s.source,ts:s.ts}))},null,2);
+var S={data:{scripts:[],folders:[],categories:[],settings:{remoteUrl:'',autoSync:false,lastSync:null,language:'pt',theme:'dark'}},filter:{folderId:null,categoryId:null,search:''},lang:'pt',theme:'dark',fileHandle:null,fileName:null};
+
+function openDB(){return new Promise(function(r,j){var req=indexedDB.open('SQLScriptMgrDB',1);req.onupgradeneeded=function(e){e.target.result.createObjectStore('d')};req.onsuccess=function(e){r(e.target.result)};req.onerror=function(e){j(e.target.error)}})}
+function dbLoad(){return openDB().then(function(db){return new Promise(function(r,j){var tx=db.transaction('d','readonly');var req=tx.objectStore('d').get('main');req.onsuccess=function(){r(req.result||null)};req.onerror=function(){j(req.error)}})})}
+function dbSave(d){return openDB().then(function(db){return new Promise(function(r,j){var tx=db.transaction('d','readwrite');tx.objectStore('d').put(d,'main');tx.oncomplete=function(){r()};tx.onerror=function(){j(tx.error)}})})}
+
+var hasFs='showSaveFilePicker' in window;
+function fsWrite(h,d){return h.createWritable().then(function(w){return w.write(d).then(function(){return w.close()})})}
+function fsRead(h){return h.getFile().then(function(f){return f.text()})}
+
+function uid(){return crypto.randomUUID()}function now(){return new Date().toISOString()}
+function fmtDate(iso){if(!iso)return'-';return new Date(iso).toLocaleDateString(S.lang==='pt'?'pt-BR':'en-US',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function getChildren(pid){return S.data.folders.filter(function(f){return f.parentId===pid})}
+function getFolderPath(fid){if(!fid)return null;var p=[];var c=S.data.folders.find(function(f){return f.id===fid});while(c){p.unshift(c.name);c=S.data.folders.find(function(f){return f.id===c.parentId})}return p.join(' / ')}
+function isDesc(parentId,childId){if(!childId)return false;var c=S.data.folders.find(function(f){return f.id===childId});while(c){if(c.id===parentId)return true;c=S.data.folders.find(function(f){return f.id===c.parentId})}return false}
+function countScriptsInFolder(fid){var ids=new Set();(function coll(id){ids.add(id);getChildren(id).forEach(function(c){coll(c.id)})})(fid);return S.data.scripts.filter(function(s){return ids.has(s.folderId)}).length}
+function getFiltered(){var l=S.data.scripts.slice();if(S.filter.categoryId)l=l.filter(function(s){return s.categoryId===S.filter.categoryId});if(S.filter.folderId!==null){if(S.filter.folderId==='__none__')l=l.filter(function(s){return!s.folderId});else{var ids=new Set();(function coll(id){ids.add(id);getChildren(id).forEach(function(c){coll(c.id)})})(S.filter.folderId);l=l.filter(function(s){return ids.has(s.folderId)})}}if(S.filter.search){var q=S.filter.search.toLowerCase();l=l.filter(function(s){return s.name.toLowerCase().indexOf(q)>=0||s.content.toLowerCase().indexOf(q)>=0})}return l.sort(function(a,b){return new Date(b.updatedAt)-new Date(a.updatedAt)})}
+function mergeData(local,inc){var r=JSON.parse(JSON.stringify(local));var lcN=new Set(r.categories.map(function(c){return c.name.toLowerCase()}));inc.categories.forEach(function(c){if(!lcN.has(c.name.toLowerCase()))r.categories.push(c)});var lfK=new Set(r.folders.map(function(f){return(f.name+'|'+f.parentId).toLowerCase()}));inc.folders.forEach(function(f){if(!lfK.has((f.name+'|'+f.parentId).toLowerCase()))r.folders.push(f)});var lMap=new Map(r.scripts.map(function(s){return[s.name.toLowerCase(),s]}));inc.scripts.forEach(function(is_){var ex=lMap.get(is_.name.toLowerCase());if(!ex)r.scripts.push(is_);else if(new Date(is_.updatedAt)>new Date(ex.updatedAt)){var idx=r.scripts.findIndex(function(s){return s.id===ex.id});if(idx>=0)r.scripts[idx]=is_}});return r}
+function buildExport(){return{version:'1.0',scripts:S.data.scripts,folders:S.data.folders,categories:S.data.categories,settings:{remoteUrl:S.data.settings.remoteUrl,autoSync:S.data.settings.autoSync,lastSync:S.data.settings.lastSync},exportedAt:now()}}
+function validImport(d){return d&&Array.isArray(d.scripts)&&Array.isArray(d.categories)}
+
+function save(){return dbSave(S.data)}
+function load(){return dbLoad().then(function(d){if(d){S.data=d;if(!S.data.settings)S.data.settings={remoteUrl:'',autoSync:false,lastSync:null};if(!Array.isArray(S.data.categories))S.data.categories=[];if(!Array.isArray(S.data.folders))S.data.folders=[];if(!Array.isArray(S.data.scripts))S.data.scripts=[]}else{S.data.categories=DEF_CATS.map(function(c){return{id:uid(),name:c.name,color:c.color,createdAt:now()}});S.data.folders=[];S.data.scripts=[];S.data.settings={remoteUrl:'',autoSync:false,lastSync:null};return save()}S.lang=S.data.settings.language||'pt';S.theme=S.data.settings.theme||'dark'})}
+
+function render(){renderSidebar();renderMain();updateTop()}
+function updateTop(){document.getElementById('langBtn').textContent=S.lang.toUpperCase();document.getElementById('searchInput').placeholder=t('search');document.getElementById('syncBtn').style.display=S.data.settings.remoteUrl?'':'none';document.querySelectorAll('[data-t]').forEach(function(el){el.textContent=t(el.getAttribute('data-t'))});document.getElementById('menuBtn').style.display=window.innerWidth<=768?'flex':'none';document.querySelectorAll('.hide-m').forEach(function(el){el.style.display=window.innerWidth<=768?'none':''})}
+
+function renderSidebar(){
+  var sc=document.getElementById('sidebarContent');var allActive=S.filter.folderId===null&&S.filter.categoryId===null;
+  var h='<div class="sidebar-item '+(allActive?'active':'')+'" onclick="setFilter(null,null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg><span>'+t('allScripts')+'</span><span class="cnt">'+S.data.scripts.length+'</span></div>';
+  h+='<div class="sidebar-section"><span>'+t('folders')+'</span><button class="icon-btn" onclick="event.stopPropagation();openFolderModal()" title="'+t('addFolder')+'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button></div>';
+  h+='<div class="sidebar-item '+(S.filter.folderId==='__none__'&&S.filter.categoryId===null?'active':'')+'" onclick="setFilter(\'__none__\',null)" style="padding-left:28px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" stroke-dasharray="3 2"/></svg><span style="opacity:.6;font-style:italic">'+t('noFolder')+'</span><span class="cnt">'+S.data.scripts.filter(function(s){return!s.folderId}).length+'</span></div>';
+  h+=renderTree(null);
+  h+='<div class="sidebar-section"><span>'+t('categories')+'</span><button class="icon-btn" onclick="event.stopPropagation();openCatModal()" title="'+t('addCat')+'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button></div>';
+  h+='<div class="sidebar-item '+(S.filter.categoryId==='__none__'&&S.filter.folderId===null?'active':'')+'" onclick="setFilter(null,\'__none__\')"><div class="dot" style="background:var(--tx3);opacity:.4"></div><span style="opacity:.6;font-style:italic">'+t('noCatLabel')+'</span><span class="cnt">'+S.data.scripts.filter(function(s){return!s.categoryId}).length+'</span></div>';
+  S.data.categories.forEach(function(c){var cnt=S.data.scripts.filter(function(s){return s.categoryId===c.id}).length;var act=S.filter.categoryId===c.id&&S.filter.folderId===null;h+='<div class="sidebar-item '+(act?'active':'')+'" data-ctx-type="cat" data-ctx-id="'+c.id+'" onclick="setFilter(null,\''+c.id+'\')"><div class="dot" style="background:'+c.color+'"></div><span>'+esc(c.name)+'</span><span class="cnt">'+cnt+'</span></div>'});
+  sc.innerHTML=h;
+  sc.querySelectorAll('[data-ctx-type]').forEach(function(el){el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();showCtx(e,el.getAttribute('data-ctx-type'),el.getAttribute('data-ctx-id'))})});
+  sc.querySelectorAll('[data-ctx-folder]').forEach(function(el){el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();showCtx(e,'folder',el.getAttribute('data-ctx-folder'))})});
+}
+function renderTree(pid){
+  var ch=S.data.folders.filter(function(f){return f.parentId===pid}).sort(function(a,b){return a.name.localeCompare(b.name)});
+  if(!ch.length&&!pid)return'<div style="padding:4px 28px;font-size:12px;color:var(--tx3);font-style:italic">'+t('noFoldersYet')+'</div>';
+  var h=ch.length?'<div class="folder-tree">':'';
+  ch.forEach(function(f){var hasCh=getChildren(f.id).length>0;var cnt=countScriptsInFolder(f.id);var act=S.filter.folderId===f.id&&S.filter.categoryId===null;var exp=S.filter.folderId===f.id||isDesc(f.id,S.filter.folderId);h+='<div class="sidebar-item '+(act?'active':'')+'" data-ctx-folder="'+f.id+'" onclick="setFilter(\''+f.id+'\',null)">'+(hasCh?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate('+(exp?90:0)+'deg);transition:transform .15s;flex-shrink:0"><path d="m9 18 6-6-6-6"/></svg>':'<span style="width:12px;flex-shrink:0"></span>')+'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span><span class="cnt">'+cnt+'</span></div>';if(hasCh)h+=renderTree(f.id)});return h+(ch.length?'</div>':'')
 }
 
-// Pede para o usuario escolher onde salvar (primeira vez ou "salvar como")
-async function pickFile(){
-    if(!hasFS){fallbackDL();return null}
-    try{
-        const h=await window.showSaveFilePicker({
-            suggestedName:_fn||'sql_scripts.json',
-            types:[{description:'JSON Backup',accept:{'application/json':['.json']}}]
-        });
-        _fh=h;_fn=h.name;await cS('fileName',_fn);upFC();return h;
-    }catch(e){if(e.name!=='AbortError')toast('Erro ao selecionar arquivo: '+e.message,'error');return null}
+/* CARDS - clicar abre VISUALIZACAO */
+function renderMain(){
+  var mc=document.getElementById('mainContent');var list=getFiltered();
+  if(!list.length){mc.innerHTML='<div class="empty-state"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:.15"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6"/></svg><div style="font-size:16px;font-weight:600;color:var(--tx1)">'+t('emptyState')+'</div><div style="font-size:13px;color:var(--tx2)">'+t('emptySub')+'</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-accent" onclick="openNewScript()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>'+t('newScript')+'</button><button class="btn" onclick="importDatabase()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+t('importDB')+'</button></div></div>';return}
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px">';
+  list.forEach(function(s){var cat=S.data.categories.find(function(c){return c.id===s.categoryId});var fp=getFolderPath(s.folderId);var pv=s.content?s.content.substring(0,110).replace(/\n/g,' ')+(s.content.length>110?'...':''):'';var lc=s.content?(s.content.match(/\n/g)||[]).length+1:0;h+='<div class="card" onclick="openViewScript(\''+s.id+'\')"><div class="card-bar" style="background:'+(cat?cat.color:'var(--tx3)')+'"></div><div style="display:flex;align-items:start;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="font-weight:600;font-size:13.5px;line-height:1.3;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(s.name)+'">'+esc(s.name)+'</div>'+(cat?'<span class="badge" style="background:'+cat.color+'18;color:'+cat.color+';border:1px solid '+cat.color+'30;flex-shrink:0">'+cat.name+'</span>':'')+'</div>'+(fp?'<div style="font-size:10.5px;color:var(--tx2);margin-bottom:6px;display:flex;align-items:center;gap:3px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'+esc(fp)+'</div>':'')+'<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--tx2);line-height:1.5;margin-bottom:8px;min-height:32px">'+(pv?esc(pv):'<i style="color:var(--tx3)">'+t('noContent')+'</i>')+'</div><div style="display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--tx3)"><span>'+lc+' '+t('lines')+'</span><span>'+fmtDate(s.updatedAt)+'</span></div></div>'});
+  h+='</div>';mc.innerHTML=h;
 }
 
-// Escreve no handle existente ou pede novo se necessario
-async function writeFH(data){
-    if(!hasFS){fallbackDL();return}
-    try{
-        // Se tem handle, tenta verificar se ainda e valido
-        if(_fh){
-            try{const w=await _fh.createWritable();await w.write(data);await w.close();return}catch(e){
-                // Handle invalido — cai no pick
-                if(e.name==='NotAllowedError'||e.name==='NotFoundError'){_fh=null}
-                else throw e;
-            }
-        }
-        // Nao tem handle — tenta pedir de novo com o nome conhecido
-        if(!_fn){const h=await pickFile();if(!h)return;_fh=h}
-        else{
-            // Tenta com o nome salvo — o navegador pode ou nao lembrar
-            try{
-                const h=await window.showSaveFilePicker({
-                    suggestedName:_fn,
-                    types:[{description:'JSON Backup',accept:{'application/json':['.json']}}]
-                });
-                _fh=h;_fn=h.name;await cS('fileName',_fn);
-                const w=await _fh.createWritable();await w.write(data);await w.close();
-            }catch(e){
-                if(e.name==='AbortError')return;
-                throw e;
-            }
-        }
-    }catch(e){toast('Erro ao salvar: '+e.message,'error')}
+function setFilter(fid,cid){if(fid!==undefined)S.filter.folderId=fid;if(cid!==undefined)S.filter.categoryId=cid;render();if(window.innerWidth<=768)toggleSidebar()}
+function onSearch(v){S.filter.search=v;renderMain()}
+
+function openModal(hd,bd,ft,fs){var box=document.getElementById('modalBox');document.getElementById('mHead').innerHTML=hd;document.getElementById('mBody').innerHTML=bd;document.getElementById('mFoot').innerHTML=ft;if(fs){box.classList.add('modal-fs');document.getElementById('mBody').style.cssText='display:flex;flex-direction:column;overflow:hidden'}else{box.classList.remove('modal-fs');document.getElementById('mBody').style.cssText=''}document.getElementById('modalOvl').classList.add('active');setTimeout(function(){var fi=document.querySelector('#mBody input,#mBody textarea');if(fi)fi.focus()},80)}
+function closeModal(){document.getElementById('modalOvl').classList.remove('active');document.getElementById('modalBox').classList.remove('modal-fs')}
+
+/* ===== VISUALIZAR - texto puro via textContent ===== */
+var _viewHL=false;
+function openViewScript(id){
+  var s=S.data.scripts.find(function(x){return x.id===id});if(!s)return;
+  var cat=S.data.categories.find(function(c){return c.id===s.categoryId});
+  var fp=getFolderPath(s.folderId);
+  var lc=s.content?(s.content.match(/\n/g)||[]).length+1:0;
+  _viewHL=false;
+  var hd='<div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6"/></svg><span style="font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+'</span></div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><button class="icon-btn" id="hlToggle" onclick="toggleHL(\''+s.id+'\')" title="'+t('toggleHL')+'" style="color:var(--tx3)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button><button class="icon-btn" onclick="copyContent(\''+s.id+'\')" title="'+t('copy')+'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="icon-btn" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+  var meta=[];
+  if(cat)meta.push('<div class="view-meta-item"><div class="dot" style="background:'+cat.color+'"></div>'+esc(cat.name)+'</div>');
+  if(fp)meta.push('<div class="view-meta-item"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'+esc(fp)+'</div>');
+  meta.push('<div class="view-meta-item">'+lc+' '+t('lines')+'</div>');
+  meta.push('<div class="view-meta-item">'+s.content.length+' '+t('chars')+'</div>');
+  meta.push('<div class="view-meta-item">'+t('createdAt')+': '+fmtDate(s.createdAt)+'</div>');
+  meta.push('<div class="view-meta-item">'+t('updatedAt')+': '+fmtDate(s.updatedAt)+'</div>');
+  var bd='<div class="view-meta" style="margin-bottom:14px;flex-shrink:0">'+meta.join('')+'</div><div id="codeView" style="flex:1;min-height:0;overflow:auto;background:var(--bg1);border:1px solid var(--bdr);border-radius:10px;padding:16px;font-family:\'JetBrains Mono\',monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word"></div>';
+  var ft='<button class="btn btn-danger btn-sm" onclick="deleteScript(\''+s.id+'\')">'+t('delete')+'</button><div style="flex:1"></div><button class="btn" onclick="closeModal()">'+t('cancel')+'</button><button class="btn btn-accent" onclick="closeModal();setTimeout(function(){openEditScript(\''+s.id+'\')},60)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'+t('edit')+'</button>';
+  openModal(hd,bd,ft,true);
+  document.getElementById('codeView').textContent=s.content;
+}
+function toggleHL(id){
+  var el=document.getElementById('codeView');if(!el)return;
+  var s=S.data.scripts.find(function(x){return x.id===id});if(!s)return;
+  _viewHL=!_viewHL;
+  var btn=document.getElementById('hlToggle');
+  if(_viewHL){el.innerHTML=renderHL(s.content);if(btn)btn.style.color='var(--acc)'}
+  else{el.textContent=s.content;if(btn)btn.style.color='var(--tx3)'}
 }
 
-// Fallback para navegadores sem File System Access
-function fallbackDL(){
-    const b=new Blob([bkData()],{type:'application/json'});
-    const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=_fn||'sql_scripts.json';a.click();URL.revokeObjectURL(u);
-    toast('Download do backup gerado','success');
+/* ===== EDITAR - texto puro via .value ===== */
+function openEditScript(id){
+  var s=S.data.scripts.find(function(x){return x.id===id});if(!s)return;
+  var catOpts=S.data.categories.map(function(c){return'<option value="'+c.id+'"'+(s.categoryId===c.id?' selected':'')+'>'+esc(c.name)+'</option>'}).join('');
+  var fldOpts='<option value="">'+t('noFolder')+'</option>'+buildFldOpts(s.folderId);
+  var hd='<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1"><button class="icon-btn" onclick="closeModal();setTimeout(function(){openViewScript(\''+s.id+'\')},60)" title="'+t('view')+'" style="color:var(--acc)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span style="font-weight:700;font-size:15px">'+t('editScript')+'</span></div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><button class="icon-btn" onclick="copyContent(\''+s.id+'\')" title="'+t('copy')+'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="icon-btn" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+  var bd='<div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;margin-bottom:14px"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div><label class="label">'+t('scriptName')+'</label><input class="inp" id="sName" value="'+esc(s.name)+'"></div><div><label class="label">'+t('category')+'</label><select class="inp" id="sCat"><option value="">'+t('selectCat')+'</option>'+catOpts+'</select></div><div><label class="label">'+t('folder')+'</label><select class="inp" id="sFld">'+fldOpts+'</select></div></div><div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:12px;color:var(--tx2)">'+t('updatedAt')+': '+fmtDate(s.updatedAt)+'</div><div id="sInfo" style="font-size:11px;color:var(--tx3)"></div></div></div><textarea class="code-edit" id="sCont"></textarea>';
+  var ft='<button class="btn btn-danger btn-sm" onclick="deleteScript(\''+s.id+'\')">'+t('delete')+'</button><div style="flex:1"></div><button class="btn" onclick="closeModal()">'+t('cancel')+'</button><button class="btn btn-accent" onclick="saveScript(\''+s.id+'\')">'+t('save')+'</button>';
+  openModal(hd,bd,ft,true);
+  document.getElementById('sCont').value=s.content;
+  updateInfo();document.getElementById('sCont').addEventListener('input',updateInfo);
 }
 
-// Salvar rapido — mesma funcao, mesmo arquivo, sempre
-async function quickSave(){
-    if(S.dirty&&S.selId){const sc=selScr();if(sc){const nm=D.EN.value.trim()||sc.name;if(!fDup(nm,sc.id)){await updScr(sc.id,{name:nm,content:D.ET.value});S.dirty=false}else{D.EN.classList.add('err-shake');setTimeout(()=>D.EN.classList.remove('err-shake'),400);return}}}
-    const data=bkData();
-    if(!hasFS){fallbackDL();return}
-    if(!_fh&&_fn){
-        // Primeiro save depois de importar — pede confirmacao do caminho
-        const h=await pickFile();if(!h)return;
-    }
-    await writeFH(data);
-    toast('Salvo em '+_fn,'success');
+/* ===== CRIAR NOVO ===== */
+function openNewScript(){
+  var catOpts=S.data.categories.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+'</option>'}).join('');
+  var fldOpts='<option value="">'+t('noFolder')+'</option>'+buildFldOpts(null);
+  var hd='<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg><span style="font-weight:700;font-size:15px">'+t('newScriptT')+'</span></div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><button class="icon-btn" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+  var bd='<div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;margin-bottom:14px"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div><label class="label">'+t('scriptName')+'</label><input class="inp" id="sName" placeholder="'+t('scriptName')+'"></div><div><label class="label">'+t('category')+'</label><select class="inp" id="sCat"><option value="">'+t('selectCat')+'</option>'+catOpts+'</select></div><div><label class="label">'+t('folder')+'</label><select class="inp" id="sFld">'+fldOpts+'</select></div></div><div style="display:flex;align-items:center;justify-content:flex-end"><div id="sInfo" style="font-size:11px;color:var(--tx3)"></div></div></div><textarea class="code-edit" id="sCont" placeholder="SELECT * FROM ..."></textarea>';
+  var ft='<div style="flex:1"></div><button class="btn" onclick="closeModal()">'+t('cancel')+'</button><button class="btn btn-accent" onclick="saveScript(\'\')">'+t('save')+'</button>';
+  openModal(hd,bd,ft,true);updateInfo();document.getElementById('sCont').addEventListener('input',updateInfo);
 }
 
-// Salvar como — sempre escolhe novo caminho
-async function saveAsNew(){const h=await pickFile();if(!h)return;const data=bkData();try{const w=await h.createWritable();await w.write(data);await w.close();toast('Salvo em '+h.name,'success')}catch(e){toast('Erro: '+e.message,'error')}}
+function updateInfo(){var el=document.getElementById('sCont');if(!el)return;var c=el.value;var info=document.getElementById('sInfo');if(info)info.textContent=(c?c.split('\n').length:0)+' '+t('lines')+' \u00b7 '+c.length+' '+t('chars')}
+function buildFldOpts(sel,pid,pfx){pid=pid||null;pfx=pfx||'';var o='';S.data.folders.filter(function(f){return f.parentId===pid}).sort(function(a,b){return a.name.localeCompare(b.name)}).forEach(function(f){o+='<option value="'+f.id+'"'+(f.id===sel?' selected':'')+'>'+pfx+esc(f.name)+'</option>';o+=buildFldOpts(sel,f.id,pfx+'  ')});return o}
 
-// Atualiza o chip de arquivo na sidebar
-function upFC(){
-    if(_fn){D.FC.classList.remove('hidden');D.FN.textContent=_fn;D.FN.title=_fn;D.SvAllL.textContent='Salvar';D.SvAllB.title='Salvar em '+_fn+' (Ctrl+Shift+S)'}
-    else{D.FC.classList.add('hidden');D.SvAllL.textContent='Salvar em...';D.SvAllB.title='Escolher onde salvar o backup'}
+async function saveScript(eid){
+  var name=document.getElementById('sName').value.trim();
+  var catId=document.getElementById('sCat').value||null;
+  var fldId=document.getElementById('sFld').value||null;
+  var content=document.getElementById('sCont').value;
+  if(!name){showToast(t('scriptName')+'!','error');return}
+  if(S.data.scripts.find(function(s){return s.name.toLowerCase()===name.toLowerCase()&&s.id!==eid})){showToast(t('dupName'),'error');return}
+  if(eid){
+    var idx=S.data.scripts.findIndex(function(s){return s.id===eid});
+    if(idx>=0)S.data.scripts[idx]=Object.assign({},S.data.scripts[idx],{name:name,categoryId:catId,folderId:fldId,content:content,updatedAt:now()});
+  }else{
+    var nid=uid();S.data.scripts.push({id:nid,name:name,content:content,categoryId:catId,folderId:fldId,createdAt:now(),updatedAt:now()});eid=nid;
+  }
+  await save();closeModal();render();showToast(t('scriptSaved'),'success');
+  setTimeout(function(){openViewScript(eid)},80);
 }
 
-/* ========== Importar Backup ========== */
-async function impBk(file){
-    return new Promise(res=>{
-        const rd=new FileReader();
-        rd.onload=async e=>{
-            try{
-                const data=JSON.parse(e.target.result);
-                if(data.format!=='sql-script-manager-backup'||!Array.isArray(data.scripts)){toast('Arquivo invalido: formato nao reconhecido','error');res(false);return}
-                const r=await merge(data.scripts);
-                const p=[];if(r.added)p.push(r.added+' novo(s)');if(r.updated)p.push(r.updated+' atualizado(s)');if(r.skipped)p.push(r.skipped+' mantido(s)');
-                const msg='Importacao: '+(p.length?p.join(', '):'nenhuma alteracao');
-                toast(msg,'success');showBanner(msg);
-                // Importar define o arquivo de destino
-                _fn=file.name;await cS('fileName',_fn);upFC();
-                render();res(true);
-            }catch(err){toast('Erro ao ler arquivo: '+err.message,'error');res(false)}
-        };
-        rd.onerror=()=>{toast('Erro ao ler arquivo','error');res(false)};rd.readAsText(file);
-    });
-}
+async function deleteScript(id){showConfirm(t('delScript'),async function(){S.data.scripts=S.data.scripts.filter(function(x){return x.id!==id});await save();closeModal();render();showToast(t('scriptDeleted'),'success')})}
+function copyContent(id){var s=S.data.scripts.find(function(x){return x.id===id});if(!s)return;navigator.clipboard.writeText(s.content).then(function(){showToast(t('copied'),'success')}).catch(function(){var ta=document.createElement('textarea');ta.value=s.content;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast(t('copied'),'success')})}
 
-/* ========== Sincronizacao Remota ========== */
-async function doSync(){
-    const url=await cG('syncUrl','');if(!url){toast('Nenhuma URL configurada','warning');openCfg();return}
-    setSS('w');
-    try{
-        const resp=await fetch(url,{cache:'no-store'});if(!resp.ok)throw new Error('HTTP '+resp.status);
-        const data=await resp.json();if(data.format!=='sql-script-manager-backup'||!data.scripts)throw new Error('Formato invalido no servidor');
-        const r=await merge(data.scripts);
-        const p=[];if(r.added)p.push(r.added+' novo(s)');if(r.updated)p.push(r.updated+' atualizado(s)');if(r.skipped)p.push(r.skipped+' sem mudanca');
-        const msg='Sync: '+(p.length?p.join(', '):'tudo atualizado');
-        await cS('lastSync',{ts:Date.now(),result:r,url});setSS('ok');toast(msg,'success');showBanner(msg);render();
-    }catch(err){await cS('lastSync',{ts:Date.now(),error:err.message,url});setSS('e');toast('Falha na sync: '+err.message,'error')}
-}
-async function autoSync(){const u=await cG('syncUrl','');const a=await cG('syncAuto',false);if(u&&a)await doSync()}
-function setSS(st){D.SSw.classList.remove('hidden');const d=D.SD,l=D.SLbl;d.className='sd';if(st==='ok'){d.classList.add('sd-ok');l.textContent='Sincronizado';l.className='text-[10px] text-mint/70'}else if(st==='e'){d.classList.add('sd-e');l.textContent='Erro';l.className='text-[10px] text-red-400/70'}else if(st==='w'){d.classList.add('sd-w');l.textContent='Sincronizando...';l.className='text-[10px] text-amber-400/70'}else{d.classList.add('sd-o');l.textContent='Offline';l.className='text-[10px] text-smoke/60'}}
-function showBanner(m){D.SBm.textContent=m;D.SB.classList.remove('hidden')}
+/* ===== Folder Modal ===== */
+function openFolderModal(eid){var f=eid?S.data.folders.find(function(x){return x.id===eid}):null;var isE=!!f;var parOpts='<option value="">'+t('noParent')+'</option>'+buildFldOpts(f?f.parentId:null);var hd='<span style="font-weight:700;font-size:15px">'+(isE?t('editFolder'):t('newFolder'))+'</span><button class="icon-btn" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';var bd='<div style="display:flex;flex-direction:column;gap:12px"><div><label class="label">'+t('folderName')+'</label><input class="inp" id="fName" value="'+(f?esc(f.name):'')+'" placeholder="'+t('folderName')+'"></div><div><label class="label">'+t('parentFolder')+'</label><select class="inp" id="fPar">'+parOpts+'</select></div></div>';var ft=(isE?'<button class="btn btn-danger btn-sm" onclick="deleteFolder(\''+f.id+'\')">'+t('delete')+'</button><div style="flex:1"></div>':'<div style="flex:1"></div>')+'<button class="btn" onclick="closeModal()">'+t('cancel')+'</button><button class="btn btn-accent" onclick="saveFolder(\''+(eid||'')+'\')">'+t('save')+'</button>';openModal(hd,bd,ft,false)}
+async function saveFolder(eid){var name=document.getElementById('fName').value.trim();var parId=document.getElementById('fPar').value||null;if(!name){showToast(t('folderName')+'!','error');return}if(eid){if(parId===eid||isDesc(eid,parId)){showToast(t('cycleDetected'),'error');return}var idx=S.data.folders.findIndex(function(f){return f.id===eid});if(idx>=0)S.data.folders[idx]=Object.assign({},S.data.folders[idx],{name:name,parentId:parId})}else{S.data.folders.push({id:uid(),name:name,parentId:parId,createdAt:now()})}await save();closeModal();render();showToast(t('folderSaved'),'success')}
+async function deleteFolder(id){var f=S.data.folders.find(function(x){return x.id===id});if(!f)return;showConfirm(t('delFolder').replace('{n}',f.name),async function(){var ids=new Set();(function coll(i){ids.add(i);getChildren(i).forEach(function(c){coll(c.id)})})(id);S.data.scripts.forEach(function(s){if(ids.has(s.folderId))s.folderId=null});S.data.folders=S.data.folders.filter(function(x){return!ids.has(x.id)});if(S.filter.folderId&&ids.has(S.filter.folderId))S.filter.folderId=null;await save();closeModal();render();showToast(t('folderDeleted'),'success')})}
 
-/* ========== Config Modal ========== */
-async function openCfg(){
-    D.SU.value=await cG('syncUrl','');D.SA.checked=await cG('syncAuto',false);
-    const ls=await cG('lastSync',null);
-    if(ls){D.SL.classList.remove('hidden');let t=fD(ls.ts);if(ls.error)t+='\nErro: '+ls.error;else if(ls.result)t+='\n'+ls.result.added+' novos, '+ls.result.updated+' atualizados, '+ls.result.skipped+' mantidos';D.SLt.textContent=t}else{D.SL.classList.add('hidden')}
-    D.SM.classList.remove('hidden');
-}
-async function saveCfg(){const url=D.SU.value.trim();await cS('syncUrl',url);await cS('syncAuto',D.SA.checked);setSS(url?'ok':'o');toast('Configuracao salva','success');q('#SM').classList.add('hidden')}
-async function testSync(){const url=D.SU.value.trim();if(!url){toast('Insira uma URL','warning');return}const b=D.STb;b.innerHTML='<i class="fa-solid fa-spinner spin text-[10px]"></i> Testando...';b.disabled=true;try{const r=await fetch(url,{method:'HEAD',cache:'no-store'});toast(r.ok?'Conexao OK (HTTP '+r.status+')':'HTTP '+r.status,r.ok?'success':'warning')}catch(e){toast('Falha: '+e.message,'error')}b.innerHTML='<i class="fa-solid fa-plug text-[10px]"></i> Testar';b.disabled=false}
+/* ===== Category Modal ===== */
+function openCatModal(eid){var c=eid?S.data.categories.find(function(x){return x.id===eid}):null;var isE=!!c;var hd='<span style="font-weight:700;font-size:15px">'+(isE?t('editCat'):t('newCat'))+'</span><button class="icon-btn" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';var bd='<div style="display:flex;flex-direction:column;gap:12px"><div><label class="label">'+t('catName')+'</label><input class="inp" id="cName" value="'+(c?esc(c.name):'')+'" placeholder="'+t('catName')+'"></div><div><label class="label">'+t('color')+'</label><div style="display:flex;align-items:center;gap:10px"><input type="color" id="cColor" value="'+(c?c.color:'#d4943a')+'" style="width:40px;height:34px;border:1px solid var(--bdr);border-radius:6px;cursor:pointer;background:var(--bg1);padding:2px"><input class="inp" id="cHex" value="'+(c?c.color:'#d4943a')+'" style="flex:1;font-family:\'JetBrains Mono\',monospace;font-size:13px" oninput="document.getElementById(\'cColor\').value=this.value"></div></div></div>';var ft=(isE?'<button class="btn btn-danger btn-sm" onclick="deleteCat(\''+c.id+'\')">'+t('delete')+'</button><div style="flex:1"></div>':'<div style="flex:1"></div>')+'<button class="btn" onclick="closeModal()">'+t('cancel')+'</button><button class="btn btn-accent" onclick="saveCat(\''+(eid||'')+'\')">'+t('save')+'</button>';openModal(hd,bd,ft,false);document.getElementById('cColor').addEventListener('input',function(){document.getElementById('cHex').value=document.getElementById('cColor').value})}
+async function saveCat(eid){var name=document.getElementById('cName').value.trim();var color=document.getElementById('cColor').value;if(!name){showToast(t('catName')+'!','error');return}if(eid){var idx=S.data.categories.findIndex(function(c){return c.id===eid});if(idx>=0)S.data.categories[idx]=Object.assign({},S.data.categories[idx],{name:name,color:color})}else{S.data.categories.push({id:uid(),name:name,color:color,createdAt:now()})}await save();closeModal();render();showToast(t('catSaved'),'success')}
+async function deleteCat(id){var c=S.data.categories.find(function(x){return x.id===id});if(!c)return;showConfirm(t('delCat').replace('{n}',c.name),async function(){S.data.scripts.forEach(function(s){if(s.categoryId===id)s.categoryId=null});S.data.categories=S.data.categories.filter(function(x){return x.id!==id});if(S.filter.categoryId===id)S.filter.categoryId=null;await save();closeModal();render();showToast(t('catDeleted'),'success')})}
 
-/* ========== Render ========== */
-function render(){rSt();rCh();rLi();rEd();rFt();rMb()}
-function rMb(){if(S.selId)D.M.classList.add('ms');else D.M.classList.remove('ms')}
-function rSt(){
-    if(!S.scripts.length){D.StB.classList.add('hidden');return}D.StB.classList.remove('hidden');
-    const tc={};S.scripts.forEach(s=>{tc[s.type]=(tc[s.type]||0)+1});
-    let h='<span class="text-[11px] text-smoke font-medium">'+S.scripts.length+' script'+(S.scripts.length!==1?'s':'')+'</span>';
-    Object.entries(tc).sort((a,b)=>b[1]-a[1]).forEach(([t,c])=>{h+='<span class="text-[10px] px-1.5 py-0.5 rounded b-'+t+' font-semibold">'+t+' '+c+'</span>'});
-    D.StB.innerHTML=h;
-}
-function rCh(){
-    const ts=new Set(S.scripts.map(s=>s.type));const ord=['SELECT','INSERT','UPDATE','DELETE','CREATE','ALTER','DROP','GRANT','EXEC','BLOCK','SET','USE','OTHER'];
-    let h='<button class="fc text-[10px] px-2 py-0.5 rounded-md border border-edge font-semibold '+(S.filter==='ALL'?'on':'text-smoke hover:text-pale')+'" onclick="setF(\'ALL\')">Todos</button>';
-    ord.forEach(t=>{if(!ts.has(t))return;const c=S.scripts.filter(s=>s.type===t).length;h+='<button class="fc text-[10px] px-2 py-0.5 rounded-md border border-edge font-semibold '+(S.filter===t?'on':'text-smoke hover:text-pale')+'" onclick="setF(\''+t+'\')">'+t+' <span class="opacity-50">'+c+'</span></button>'});
-    D.Ch.innerHTML=h;
-}
-function rLi(){
-    const list=filtered();
-    if(!list.length&&!S.scripts.length){D.SLi.innerHTML='';return}
-    if(!list.length){D.SLi.innerHTML='<div class="p-6 text-center"><p class="text-smoke/50 text-xs">Nenhum script encontrado</p></div>';return}
-    let h='';
-    list.forEach((sc,i)=>{
-        const a=sc.id===S.selId;const pv=tr(fL(sc.content,2),70);const nl=nL(sc.content);
-        h+='<div class="si px-3 py-2.5 border-l-2 '+(a?'border-l-mint act':'border-l-transparent')+' cursor-pointer anim-fiu" style="animation-delay:'+i*18+'ms" onclick="sel(\''+sc.id+'\')">'
-            +'<div class="flex items-center gap-2 mb-0.5"><span class="b-'+sc.type+' text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest shrink-0">'+sc.type+'</span>'
-            +'<span class="text-xs font-semibold text-pale truncate flex-1 min-w-0">'+eH(sc.name)+'</span></div>'
-            +'<pre class="text-[11px] text-smoke/50 font-mono truncate leading-relaxed">'+eH(pv)+'</pre>'
-            +'<div class="flex items-center gap-2 mt-1"><span class="text-[10px] text-smoke/35">'+nl+' ln</span>'
-            +(sc.source==='sync'?'<span class="text-[10px] text-mint/40"><i class="fa-solid fa-cloud-arrow-down text-[8px] mr-0.5"></i>sync</span>':'')
-            +'<span class="text-[10px] text-smoke/25 ml-auto">'+fD(sc.ts)+'</span></div></div>';
-    });
-    D.SLi.innerHTML=h;
-}
-function rEd(){
-    const sc=selScr();
-    if(!sc){D.EE.classList.remove('hidden');D.ED.classList.add('hidden');return}
-    D.EE.classList.add('hidden');D.ED.classList.remove('hidden');
-    if(document.activeElement!==D.EN)D.EN.value=sc.name;
-    D.EB.textContent=sc.type;D.EB.className='b-'+sc.type+' text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest shrink-0';
-    D.EM.textContent=nL(sc.content)+' ln · '+sc.content.length+' car. · '+fD(sc.ts);
-    if(document.activeElement!==D.ET){D.ET.value=sc.content;uLN()}
-    if(S.dirty){D.SvB.innerHTML='<i class="fa-solid fa-circle text-[5px] text-amber-400 mr-1"></i> Salvar';D.SvB.className='h-7 px-3 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors flex items-center gap-1.5 fr'}
-    else{D.SvB.innerHTML='<i class="fa-solid fa-check text-[10px]"></i> Salvar';D.SvB.className='h-7 px-3 rounded-md text-xs font-semibold bg-mint/10 text-mint hover:bg-mint/20 transition-colors flex items-center gap-1.5 fr'}
-}
-function rFt(){D.LF.style.display=S.scripts.length?'none':'block'}
-function uLN(){const n=D.ET.value.split('\n').length;let h='';for(let i=1;i<=n;i++)h+=i+'\n';D.LN.textContent=h}
-function uCI(){const v=D.ET.value,p=D.ET.selectionStart,bc=v.substring(0,p);D.CI.textContent='Ln '+bc.split('\n').length+', Col '+(p-bc.lastIndexOf('\n'))}
+/* ===== Settings ===== */
+function openSettings(){var s=S.data.settings;var hd='<span style="font-weight:700;font-size:15px">'+t('settingsTitle')+'</span><button class="icon-btn" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';var bd='<div style="display:flex;flex-direction:column;gap:16px"><div style="padding:14px;background:var(--bg1);border:1px solid var(--bdr);border-radius:10px"><div style="font-weight:600;font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'+t('remoteUrl')+'</div><input class="inp" id="setUrl" value="'+esc(s.remoteUrl||'')+'" placeholder="'+t('remoteUrlPh')+'" style="margin-bottom:10px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--tx1)"><input type="checkbox" id="setAuto" '+(s.autoSync?'checked':'')+' style="accent-color:var(--acc);width:16px;height:16px">'+t('autoSync')+'</label><div style="font-size:11px;color:var(--tx3);margin-top:8px">'+t('mergeInfo')+'</div><div style="font-size:11px;color:var(--tx2);margin-top:6px">'+t('lastSync')+': '+(s.lastSync?fmtDate(s.lastSync):t('never'))+'</div></div><div style="padding:14px;background:var(--bg1);border:1px solid var(--bdr);border-radius:10px"><div style="font-weight:600;font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'+t('backupLoc')+'</div><div style="font-size:13px;color:var(--tx1);margin-bottom:10px">'+(S.fileName?'<span style="color:var(--grn)">'+esc(S.fileName)+'</span>':'<span style="color:var(--tx3)">'+t('noLoc')+'</span>')+'</div>'+(hasFs?'<button class="btn btn-sm" onclick="changeLoc()">'+t('changeLoc')+'</button>':'<div style="font-size:11px;color:var(--tx3)">'+t('errFsApi')+'</div>')+'</div><div style="padding:14px;background:var(--bg1);border:1px solid var(--bdr);border-radius:10px"><div style="font-weight:600;font-size:13px;margin-bottom:10px">Tema / Idioma</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-sm '+(S.theme==='dark'?'btn-accent':'')+'" onclick="setTheme(\'dark\');openSettings()">'+t('dark')+'</button><button class="btn btn-sm '+(S.theme==='light'?'btn-accent':'')+'" onclick="setTheme(\'light\');openSettings()">'+t('light')+'</button><div style="width:1px;background:var(--bdr);margin:0 4px"></div><button class="btn btn-sm '+(S.lang==='pt'?'btn-accent':'')+'" onclick="setLang(\'pt\');openSettings()">PT</button><button class="btn btn-sm '+(S.lang==='en'?'btn-accent':'')+'" onclick="setLang(\'en\');openSettings()">EN</button></div></div></div>';var ft='<div style="flex:1"></div><button class="btn" onclick="closeModal()">'+t('cancel')+'</button><button class="btn btn-accent" onclick="saveSettings()">'+t('save')+'</button>';openModal(hd,bd,ft,false)}
+async function saveSettings(){S.data.settings.remoteUrl=document.getElementById('setUrl').value.trim();S.data.settings.autoSync=document.getElementById('setAuto').checked;S.data.settings.language=S.lang;S.data.settings.theme=S.theme;await save();closeModal();render();showToast(t('scriptSaved'),'success')}
 
-/* ========== Acoes ========== */
-async function sel(id){if(S.dirty&&S.selId){const sc=selScr();if(sc&&(sc.name!==D.EN.value.trim()||sc.content!==D.ET.value))await saveCur(true)}S.selId=id;S.dirty=false;render();setTimeout(()=>D.ET.focus(),40)}
-async function desel(){if(S.dirty&&S.selId)await saveCur(true);S.selId=null;S.dirty=false;render()}
-async function saveCur(silent){
-    const sc=selScr();if(!sc)return;const nm=D.EN.value.trim()||sc.name;
-    if(fDup(nm,sc.id)){toast('Ja existe um script chamado "'+nm+'"','error');D.EN.classList.add('err-shake');setTimeout(()=>D.EN.classList.remove('err-shake'),400);D.EN.value=sc.name;D.EN.focus();return}
-    const r=await updScr(sc.id,{name:nm,content:D.ET.value});if(r===null)return;S.dirty=false;if(!silent)toast('Salvo no banco local','success');render();
-}
-async function cpCur(){const sc=selScr();if(!sc)return;try{await navigator.clipboard.writeText(sc.content);toast('Copiado','success')}catch(e){const t=document.createElement('textarea');t.value=sc.content;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('Copiado','success')}}
-async function dlCur(){const sc=selScr();if(!sc)return;const b=new Blob([sc.content],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=sc.name.replace(/[^a-zA-Z0-9_\-\s]/g,'').replace(/\s+/g,'_')+'.sql';a.click();URL.revokeObjectURL(u);toast('Download iniciado','success')}
-async function dupCur(){const sc=selScr();if(!sc)return;const ns=await addScr(sc.content,sc.source);ns.name=uName(sc.name+' (copia)',ns.id);await dbP(ns);await reload();S.selId=ns.id;S.dirty=false;toast('Duplicado','success');render()}
-function askDel(){const sc=selScr();if(!sc)return;showCfm('Excluir script','Excluir "'+sc.name+'" do banco local?',async()=>{await rmScr(sc.id);S.dirty=false;toast('Excluido','info');render()})}
-async function addNew(){const sc=await addScr('','manual');S.selId=sc.id;S.dirty=false;render();setTimeout(()=>D.EN.focus(),40)}
-function askClr(){if(!S.scripts.length){toast('Banco ja esta vazio','warning');return}showCfm('Limpar banco local','Remover TODOS os '+S.scripts.length+' script(s)?',async()=>{await dbC();S.scripts=[];S.ctr=0;S.selId=null;S.dirty=false;await cS('counter',0);toast('Banco limpo','info');render()})}
+var _cc=null;
+function showConfirm(msg,cb){_cc=cb;document.getElementById('confirmBox').innerHTML='<div style="font-size:14px;line-height:1.5;margin-bottom:18px;color:var(--tx1)">'+msg+'</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn" onclick="closeConfirm()">'+t('cancel')+'</button><button class="btn btn-danger" onclick="execConfirm()">'+t('delete')+'</button></div>';document.getElementById('confirmOvl').classList.add('active')}
+function closeConfirm(){document.getElementById('confirmOvl').classList.remove('active');_cc=null}
+function execConfirm(){if(_cc)_cc();closeConfirm()}
+function showToast(msg,type){type=type||'info';var c=document.getElementById('toastC');var d=document.createElement('div');d.className='toast toast-'+type;d.textContent=msg;c.appendChild(d);setTimeout(function(){d.style.opacity='0';d.style.transform='translateX(40px)';d.style.transition='all .3s';setTimeout(function(){d.remove()},300)},3000)}
 
-async function loadEx(){
-    const sql=`SELECT id, nome, email, telefone\nFROM clientes\nWHERE ativo = 1\n  AND data_cadastro >= '2024-01-01'\nORDER BY nome ASC;\n\nINSERT INTO produtos (nome, preco, estoque, categoria_id, descricao)\nVALUES ('Notebook Dell Inspiron 15', 3499.99, 25, 3, 'Notebook 8GB RAM 256GB SSD'),\n       ('Mouse Logitech MX Master', 499.90, 150, 5, 'Mouse sem fio ergonomico'),\n       ('Teclado Mecanico Redragon', 289.90, 80, 5, 'Switches Blue RGB');\n\nUPDATE pedidos\nSET status = 'ENVIADO',\n    data_envio = GETDATE(),\n    rastreio = 'BR123456789'\nWHERE id = 1024\n  AND status = 'PROCESSANDO';\n\nDELETE FROM log_acessos\nWHERE data_acesso < DATEADD(DAY, -90, GETDATE())\n  AND nivel = 'INFO';\n\nCREATE TABLE backup_clientes_2024 (\n    id INT PRIMARY KEY IDENTITY(1,1),\n    cliente_id INT NOT NULL,\n    nome VARCHAR(200) NOT NULL,\n    email VARCHAR(150),\n    data_backup DATETIME DEFAULT GETDATE(),\n    CONSTRAINT fk_backup_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id)\n);\n\nALTER TABLE produtos\nADD COLUMN tags VARCHAR(500) NULL;\n\nDROP TABLE IF EXISTS temp_relatorio_vendas;\n\nGRANT SELECT, INSERT ON produtos TO usuario_relatorio;\n\nDECLARE @total DECIMAL(18,2)\nSELECT @total = SUM(preco * estoque) FROM produtos\nPRINT 'Valor em estoque: ' + CAST(@total AS VARCHAR)`;
-    const parts=sql.split(';').map(p=>p.trim()).filter(p=>p.length>0);
-    for(const p of parts)await addScr(p,'exemplo');
-    toast(parts.length+' exemplos adicionados','success');
-    if(!S.selId&&S.scripts.length){S.selId=S.scripts[S.scripts.length-parts.length].id;S.dirty=false}render();
-}
-function setF(f){S.filter=f;rCh();rLi()}
+var _ctxTimer=null;
+function hideCtx(){document.getElementById('ctxContainer').innerHTML=''}
+function showCtx(e,type,id){hideCtx();clearTimeout(_ctxTimer);var container=document.getElementById('ctxContainer');var menu=document.createElement('div');menu.className='ctx-menu';menu.addEventListener('click',function(ev){ev.stopPropagation()});function addItem(label,svgPath,cls,fn){var item=document.createElement('div');item.className='ctx-item'+(cls?' '+cls:'');item.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="'+svgPath+'"/></svg>'+label;item.addEventListener('click',function(ev){ev.stopPropagation();hideCtx();fn()});menu.appendChild(item)}if(type==='folder'){addItem(t('edit'),'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7','',function(){openFolderModal(id)});addItem(t('delete'),'M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2','danger',function(){deleteFolder(id)})}if(type==='cat'){addItem(t('edit'),'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7','',function(){openCatModal(id)});addItem(t('delete'),'M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2','danger',function(){deleteCat(id)})}if(!menu.children.length)return;container.innerHTML='';container.appendChild(menu);var x=e.clientX,y=e.clientY;requestAnimationFrame(function(){var mw=menu.offsetWidth,mh=menu.offsetHeight;if(x+mw+8>window.innerWidth)x=window.innerWidth-mw-8;if(y+mh+8>window.innerHeight)y=window.innerHeight-mh-8;if(x<4)x=4;if(y<4)y=4;menu.style.left=x+'px';menu.style.top=y+'px'});_ctxTimer=setTimeout(hideCtx,5000)}
+document.addEventListener('click',hideCtx);
 
-/* ========== Toast ========== */
-function toast(msg,type){
-    const c={success:'border-mint/30 bg-mint/10 text-mint-light',warning:'border-amber-500/30 bg-amber-500/10 text-amber-300',error:'border-red-500/30 bg-red-500/10 text-red-300',info:'border-sky-500/30 bg-sky-500/10 text-sky-300'};
-    const ic={success:'fa-solid fa-circle-check',warning:'fa-solid fa-triangle-exclamation',error:'fa-solid fa-circle-xmark',info:'fa-solid fa-circle-info'};
-    const el=document.createElement('div');
-    el.className='pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-lg border text-sm font-medium anim-ti backdrop-blur-md shadow-xl max-w-sm '+(c[type]||c.info);
-    el.innerHTML='<i class="'+(ic[type]||ic.info)+' text-xs shrink-0"></i><span>'+eH(msg)+'</span>';
-    D.T.appendChild(el);setTimeout(()=>{el.classList.remove('anim-ti');el.classList.add('anim-too');setTimeout(()=>el.remove(),300)},4000);
-}
+async function importDatabase(){if(hasFs){try{var h=(await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}],multiple:false}))[0];processImport(await fsRead(h),h)}catch(e){if(e.name!=='AbortError')showToast(t('errImport')+': '+e.message,'error')}}else{var inp=document.getElementById('jsonInput');inp.onchange=async function(e){var f=e.target.files[0];if(!f)return;try{processImport(await f.text(),null)}catch(err){showToast(t('errImport'),'error')}inp.value=''};inp.click()}}
+async function processImport(txt,handle){try{var d=JSON.parse(txt);if(!validImport(d)){showToast(t('errJson'),'error');return}var before=S.data.scripts.length;S.data=mergeData(S.data,d);var after=S.data.scripts.length;if(d.settings){if(!S.data.settings.remoteUrl&&d.settings.remoteUrl)S.data.settings.remoteUrl=d.settings.remoteUrl;if(d.settings.autoSync&&!S.data.settings.autoSync)S.data.settings.autoSync=d.settings.autoSync}if(handle){S.fileHandle=handle;S.fileName=handle.name}await save();render();showToast(t('importOk')+(after-before>0?' (+'+( after-before)+' '+t('scripts')+')':''),'success')}catch(e){showToast(t('errJson'),'error')}}
+async function exportDatabase(){var json=JSON.stringify(buildExport(),null,2);if(hasFs&&S.fileHandle){try{await fsWrite(S.fileHandle,json);showToast(t('exportOk')+' - '+S.fileName,'success');return}catch(e){if(e.name==='NotAllowedError'){S.fileHandle=null;S.fileName=null}else{showToast(t('errExport'),'error');return}}}if(hasFs){try{var h=await window.showSaveFilePicker({suggestedName:S.fileName||'sql-script-manager.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]});await fsWrite(h,json);S.fileHandle=h;S.fileName=h.name;showToast(t('exportOk')+' - '+h.name,'success')}catch(e){if(e.name!=='AbortError')showToast(t('errExport'),'error')}}else{var b=new Blob([json],{type:'application/json'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download=S.fileName||'sql-script-manager.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);showToast(t('exportOk'),'success')}}
+async function changeLoc(){if(!hasFs)return;try{var h=await window.showSaveFilePicker({suggestedName:S.fileName||'sql-script-manager.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]});S.fileHandle=h;S.fileName=h.name;await exportDatabase();openSettings()}catch(e){if(e.name!=='AbortError')showToast(t('errExport'),'error')}}
 
-/* ========== Confirm Modal ========== */
-let _cc=null;
-function showCfm(t,m,cb){D.CMt.textContent=t;D.CMm.textContent=m;_cc=cb;D.CM.classList.remove('hidden')}
-function hCM(){D.CM.classList.add('hidden');_cc=null}
-D.CMy.addEventListener('click',()=>{if(_cc)_cc();hCM()});
-D.CM.addEventListener('click',e=>{if(e.target===D.CM)hCM()});
+function importTxtScript(){var inp=document.getElementById('txtInput');inp.onchange=async function(e){var f=e.target.files[0];if(!f)return;try{var txt=await f.text();var name=f.name.replace(/\.txt$/i,'');var existing=S.data.scripts.find(function(s){return s.name.toLowerCase()===name.toLowerCase()});if(existing){if(new Date(f.lastModified)>new Date(existing.updatedAt)){existing.content=txt;existing.updatedAt=now();showToast(t('scriptSaved')+' ('+t('syncNew')+')','success')}else{showToast(t('dupName'),'info')}}else{S.data.scripts.push({id:uid(),name:name,content:txt,categoryId:null,folderId:null,createdAt:now(),updatedAt:now()});showToast(t('scriptSaved'),'success')}await save();render()}catch(err){showToast(t('errImport'),'error')}inp.value=''};inp.click()}
 
-/* ========== Events ========== */
-D.SeI.addEventListener('input',e=>{S.search=e.target.value;rLi()});
-D.ET.addEventListener('input',()=>{S.dirty=true;uLN();uCI()});
-D.EN.addEventListener('input',()=>{S.dirty=true});
-D.ET.addEventListener('click',uCI);D.ET.addEventListener('keyup',uCI);
-D.ET.addEventListener('scroll',()=>{D.LN.scrollTop=D.ET.scrollTop});
-D.ET.addEventListener('keydown',e=>{
-    if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart,en=e.target.selectionEnd,v=e.target.value;
-        if(e.shiftKey){const ls=v.lastIndexOf('\n',s-1)+1;if(v.substring(ls,ls+4)==='    '){e.target.value=v.substring(0,ls)+v.substring(ls+4);e.target.selectionStart=e.target.selectionEnd=Math.max(s-4,ls)}}
-        else{e.target.value=v.substring(0,s)+'    '+v.substring(en);e.target.selectionStart=e.target.selectionEnd=s+4}S.dirty=true;uLN()}
-    if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCur()}
-    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='S'){e.preventDefault();quickSave()}
-});
-document.addEventListener('keydown',e=>{
-    if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();addNew()}
-    if(e.key==='Escape'){if(!D.CM.classList.contains('hidden'))hCM();else if(!D.SM.classList.contains('hidden'))D.SM.classList.add('hidden');else if(S.selId&&window.innerWidth<768)desel()}
-});
-D.IF.addEventListener('change',async e=>{if(e.target.files.length){await impBk(e.target.files[0]);e.target.value=''}});
-D.SM.addEventListener('click',e=>{if(e.target===D.SM)D.SM.classList.add('hidden')});
+async function syncRemote(){var url=S.data.settings.remoteUrl;if(!url){showToast(t('errSync'),'error');return}try{var resp=await fetch(url,{cache:'no-store'});if(!resp.ok)throw new Error('HTTP '+resp.status);var txt=await resp.text();var d=JSON.parse(txt);if(!validImport(d)){showToast(t('errJson'),'error');return}var before=S.data.scripts.length;S.data=mergeData(S.data,d);var after=S.data.scripts.length;S.data.settings.lastSync=now();await save();render();showToast(t('syncOk')+' (+'+(after-before)+' '+t('syncNew')+')','success')}catch(e){showToast(t('errSync')+': '+e.message,'error')}}
 
-/* ========== Init ========== */
-(async()=>{
-    try{
-        await reload();render();await initFH();
-        const url=await cG('syncUrl','');setSS(url?'ok':'o');await autoSync();
-        if(!hasFS&&_fn)toast('Seu navegador nao suporta escrita direta em arquivo. O backup sera feito por download.','info');
-    }catch(e){console.error('Init:',e);toast('Erro ao iniciar: '+e.message,'error');setSS('o')}
-})();
+function setTheme(th){S.theme=th;document.documentElement.setAttribute('data-theme',th)}
+function setLang(l){S.lang=l;document.documentElement.setAttribute('lang',l)}
+function toggleTheme(){setTheme(S.theme==='dark'?'light':'dark');S.data.settings.theme=S.theme;save();render()}
+function toggleLang(){setLang(S.lang==='pt'?'en':'pt');S.data.settings.language=S.lang;save();render()}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('mobOvl').classList.toggle('active')}
+
+document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('searchInput').focus()}if(e.key==='Escape'){closeModal();closeConfirm();hideCtx()}});
+
+async function init(){await load();setTheme(S.theme);setLang(S.lang);render();if(S.data.settings.autoSync&&S.data.settings.remoteUrl)setTimeout(syncRemote,500)}
+init();
 </script>
 </body>
 </html>

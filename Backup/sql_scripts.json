@@ -1,71 +1,240 @@
 {
-  "format": "sql-script-manager-backup",
-  "version": 1,
-  "exportedAt": "2026-06-02T18:55:09.316Z",
+  "version": "1.0",
   "scripts": [
     {
-      "id": "s_1780425018184_1",
+      "id": "b5f70cbd-b18a-4e64-9435-be27afe6217b",
+      "name": "Parametros executando na procedure",
+      "content": "DECLARE @idSessao INT;\n\nSELECT TOP (1)\n    @idSessao = r.session_id,\n    r.session_id,\n    r.status,\n    r.start_time,\n    DB_NAME(r.database_id) AS Banco,\n    t.text AS ComandoExecutado\nFROM sys.dm_exec_requests r\nCROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t\nWHERE t.text LIKE '%PC_NomeProcedure%'\nORDER BY r.start_time DESC;\n\nIF @idSessao IS NOT NULL\nBEGIN\n    SELECT *\n    FROM sys.dm_exec_input_buffer(@idSessao, NULL);\nEND",
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:33:28.267Z",
+      "updatedAt": "2026-06-03T21:47:24.452Z"
+    },
+    {
+      "id": "3e5cbb0b-d4f2-4c9a-b077-4c3e9d351925",
+      "name": "Ver como esta os indices",
+      "content": "WITH IndexBase AS\n(\n    SELECT\n        s.name AS SchemaName,\n        o.name AS ObjectName,\n        o.type_desc AS ObjectType,\n        i.name AS IndexName,\n        i.object_id,\n        i.index_id,\n        i.type_desc AS IndexType,\n        p.data_compression_desc,\n        i.fill_factor,\n        i.is_padded,\n        i.allow_row_locks,\n        i.allow_page_locks,\n        SUM(a.total_pages) * 8.0 / 1024 AS TotalMB,\n        SUM(p.rows) AS TotalRows\n    FROM sys.indexes i\n    JOIN sys.objects o\n        ON o.object_id = i.object_id\n    JOIN sys.schemas s\n        ON s.schema_id = o.schema_id\n    JOIN sys.partitions p\n        ON p.object_id = i.object_id\n       AND p.index_id = i.index_id\n    JOIN sys.allocation_units a\n        ON a.container_id = p.partition_id\n    WHERE\n        o.is_ms_shipped = 0\n        AND i.index_id > 0\n    GROUP BY\n        s.name,\n        o.name,\n        o.type_desc,\n        i.name,\n        i.object_id,\n        i.index_id,\n        i.type_desc,\n        p.data_compression_desc,\n        i.fill_factor,\n        i.is_padded,\n        i.allow_row_locks,\n        i.allow_page_locks\n),\nUsageBase AS\n(\n    SELECT\n        object_id,\n        index_id,\n        user_seeks,\n        user_scans,\n        user_lookups,\n        user_updates\n    FROM sys.dm_db_index_usage_stats\n    WHERE database_id = DB_ID()\n)\nSELECT\n    ib.SchemaName,\n    ib.ObjectName,\n    ib.ObjectType,\n    ib.IndexName,\n    ib.IndexType,\n    ib.TotalMB,\n    ib.TotalRows,\n    ib.data_compression_desc AS CompressaoAtual,\n    ib.fill_factor,\n    ib.is_padded,\n    ib.allow_row_locks,\n    ib.allow_page_locks,\n\n    ISNULL(ub.user_seeks, 0) AS UserSeeks,\n    ISNULL(ub.user_scans, 0) AS UserScans,\n    ISNULL(ub.user_lookups, 0) AS UserLookups,\n    ISNULL(ub.user_updates, 0) AS UserUpdates,\n\n    CASE\n        WHEN ISNULL(ub.user_updates, 0) >= \n             (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) * 2\n             AND ISNULL(ub.user_updates, 0) >= 1000\n            THEN 'WRITE_HEAVY'\n        WHEN (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) >= \n             ISNULL(ub.user_updates, 0) * 2\n            THEN 'READ_HEAVY'\n        ELSE 'MISTO'\n    END AS PerfilUso,\n\n    CASE\n        WHEN ib.TotalMB >= 1024\n             AND ISNULL(ub.user_updates, 0) >= \n                 (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) * 2\n             AND ISNULL(ub.user_updates, 0) >= 1000\n            THEN 'ROW'\n        WHEN ib.TotalMB >= 1024\n             AND (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) >= \n                 ISNULL(ub.user_updates, 0) * 2\n            THEN 'PAGE'\n        WHEN ib.TotalMB < 128\n            THEN 'NONE/ROW'\n        ELSE 'ROW'\n    END AS CompressaoSugeridaDiagnostico,\n\n    CASE\n        WHEN ib.data_compression_desc <> \n            CASE\n                WHEN ib.TotalMB >= 1024\n                     AND ISNULL(ub.user_updates, 0) >= \n                         (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) * 2\n                     AND ISNULL(ub.user_updates, 0) >= 1000\n                    THEN 'ROW'\n                WHEN ib.TotalMB >= 1024\n                     AND (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) >= \n                         ISNULL(ub.user_updates, 0) * 2\n                    THEN 'PAGE'\n                WHEN ib.TotalMB < 128\n                    THEN ib.data_compression_desc\n                ELSE 'ROW'\n            END\n            THEN 'DIVERGENTE'\n        ELSE 'OK'\n    END AS StatusDiagnostico\nFROM IndexBase ib\nLEFT JOIN UsageBase ub\n    ON ub.object_id = ib.object_id\n   AND ub.index_id = ib.index_id\nORDER BY\n    ib.TotalMB DESC;\n",
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:36:58.723Z",
+      "updatedAt": "2026-06-03T21:47:18.582Z"
+    },
+    {
+      "id": "38d45ba4-00e4-452c-b7b0-fb2034146f54",
+      "name": "Recompile na procedure",
+      "content": "EXEC sp_recompile N'[schema].[procedure]';",
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:41:37.720Z",
+      "updatedAt": "2026-06-03T21:53:13.911Z"
+    },
+    {
+      "id": "c4f2b543-d2d2-4831-9462-14e10c758036",
+      "name": "Transações abertas há mais tempo",
+      "content": "SELECT \n    s.session_id,\n    s.login_name,\n    s.host_name,\n    s.program_name,\n    t.transaction_begin_time,\n    DATEDIFF(MINUTE, t.transaction_begin_time, GETDATE()) AS minutos_aberta,\n    s.status,\n    r.command,\n    r.wait_type,\n    SUBSTRING(st.text, (r.statement_start_offset/2)+1, \n        ((CASE r.statement_end_offset WHEN -1 THEN DATALENGTH(st.text) \n          ELSE r.statement_end_offset END - r.statement_start_offset)/2)+1) AS sql_atual\nFROM sys.dm_tran_active_transactions t\nJOIN sys.dm_tran_session_transactions ts ON t.transaction_id = ts.transaction_id\nJOIN sys.dm_exec_sessions s ON ts.session_id = s.session_id\nLEFT JOIN sys.dm_exec_requests r ON s.session_id = r.session_id\nOUTER APPLY sys.dm_exec_sql_text(r.sql_handle) st\nORDER BY t.transaction_begin_time ASC;\n\n\nSELECT\n    s.session_id                                    AS SPID,\n    s.login_name,\n    s.host_name,\n    s.program_name,\n    DB_NAME(dt.database_id)                         AS Banco,\n    at.name                                         AS TransactionName,\n    at.transaction_begin_time                       AS InicioTransacao,\n    DATEDIFF(MINUTE, at.transaction_begin_time, GETDATE()) AS MinutosAberta,\n    s.status,\n    r.status                                        AS RequestStatus,\n    r.command,\n    r.wait_type,\n    r.blocking_session_id,\n    st.text                                         AS QueryExecutando\nFROM sys.dm_tran_active_transactions at\nINNER JOIN sys.dm_tran_session_transactions stt\n    ON at.transaction_id = stt.transaction_id\nINNER JOIN sys.dm_exec_sessions s\n    ON stt.session_id = s.session_id\nLEFT JOIN sys.dm_exec_requests r\n    ON s.session_id = r.session_id\nLEFT JOIN sys.dm_tran_database_transactions dt\n    ON at.transaction_id = dt.transaction_id\nOUTER APPLY sys.dm_exec_sql_text(r.sql_handle) st\nWHERE s.session_id <> @@SPID\nORDER BY at.transaction_begin_time ASC;\n",
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:44:39.746Z",
+      "updatedAt": "2026-06-03T21:47:06.564Z"
+    },
+    {
+      "id": "206fd3f1-af5f-41ad-bd0f-09c78d6cae4b",
+      "name": "Verificar como estão os indices",
+      "content": "Ver como esta os indices\n\nWITH IndexBase AS\n(\n    SELECT\n        s.name AS SchemaName,\n        o.name AS ObjectName,\n        o.type_desc AS ObjectType,\n        i.name AS IndexName,\n        i.object_id,\n        i.index_id,\n        i.type_desc AS IndexType,\n        p.data_compression_desc,\n        i.fill_factor,\n        i.is_padded,\n        i.allow_row_locks,\n        i.allow_page_locks,\n        SUM(a.total_pages) * 8.0 / 1024 AS TotalMB,\n        SUM(p.rows) AS TotalRows\n    FROM sys.indexes i\n    JOIN sys.objects o\n        ON o.object_id = i.object_id\n    JOIN sys.schemas s\n        ON s.schema_id = o.schema_id\n    JOIN sys.partitions p\n        ON p.object_id = i.object_id\n       AND p.index_id = i.index_id\n    JOIN sys.allocation_units a\n        ON a.container_id = p.partition_id\n    WHERE\n        o.is_ms_shipped = 0\n        AND i.index_id > 0\n    GROUP BY\n        s.name,\n        o.name,\n        o.type_desc,\n        i.name,\n        i.object_id,\n        i.index_id,\n        i.type_desc,\n        p.data_compression_desc,\n        i.fill_factor,\n        i.is_padded,\n        i.allow_row_locks,\n        i.allow_page_locks\n),\nUsageBase AS\n(\n    SELECT\n        object_id,\n        index_id,\n        user_seeks,\n        user_scans,\n        user_lookups,\n        user_updates\n    FROM sys.dm_db_index_usage_stats\n    WHERE database_id = DB_ID()\n)\nSELECT\n    ib.SchemaName,\n    ib.ObjectName,\n    ib.ObjectType,\n    ib.IndexName,\n    ib.IndexType,\n    ib.TotalMB,\n    ib.TotalRows,\n    ib.data_compression_desc AS CompressaoAtual,\n    ib.fill_factor,\n    ib.is_padded,\n    ib.allow_row_locks,\n    ib.allow_page_locks,\n\n    ISNULL(ub.user_seeks, 0) AS UserSeeks,\n    ISNULL(ub.user_scans, 0) AS UserScans,\n    ISNULL(ub.user_lookups, 0) AS UserLookups,\n    ISNULL(ub.user_updates, 0) AS UserUpdates,\n\n    CASE\n        WHEN ISNULL(ub.user_updates, 0) >= \n             (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) * 2\n             AND ISNULL(ub.user_updates, 0) >= 1000\n            THEN 'WRITE_HEAVY'\n        WHEN (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) >= \n             ISNULL(ub.user_updates, 0) * 2\n            THEN 'READ_HEAVY'\n        ELSE 'MISTO'\n    END AS PerfilUso,\n\n    CASE\n        WHEN ib.TotalMB >= 1024\n             AND ISNULL(ub.user_updates, 0) >= \n                 (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) * 2\n             AND ISNULL(ub.user_updates, 0) >= 1000\n            THEN 'ROW'\n        WHEN ib.TotalMB >= 1024\n             AND (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) >= \n                 ISNULL(ub.user_updates, 0) * 2\n            THEN 'PAGE'\n        WHEN ib.TotalMB < 128\n            THEN 'NONE/ROW'\n        ELSE 'ROW'\n    END AS CompressaoSugeridaDiagnostico,\n\n    CASE\n        WHEN ib.data_compression_desc <> \n            CASE\n                WHEN ib.TotalMB >= 1024\n                     AND ISNULL(ub.user_updates, 0) >= \n                         (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) * 2\n                     AND ISNULL(ub.user_updates, 0) >= 1000\n                    THEN 'ROW'\n                WHEN ib.TotalMB >= 1024\n                     AND (ISNULL(ub.user_seeks, 0) + ISNULL(ub.user_scans, 0) + ISNULL(ub.user_lookups, 0)) >= \n                         ISNULL(ub.user_updates, 0) * 2\n                    THEN 'PAGE'\n                WHEN ib.TotalMB < 128\n                    THEN ib.data_compression_desc\n                ELSE 'ROW'\n            END\n            THEN 'DIVERGENTE'\n        ELSE 'OK'\n    END AS StatusDiagnostico\nFROM IndexBase ib\nLEFT JOIN UsageBase ub\n    ON ub.object_id = ib.object_id\n   AND ub.index_id = ib.index_id\nORDER BY\n    ib.TotalMB DESC;\n",
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:44:56.495Z",
+      "updatedAt": "2026-06-03T21:46:59.905Z"
+    },
+    {
+      "id": "2e5cddb8-2f90-4f04-b0b6-755335e92a1b",
       "name": "Script para verificar o que está rodando em um processo específico",
       "content": "DECLARE @SPID INT = 208  -- <<<< ALTERE AQUI O ID DO PROCESSO\n\n-- Informações básicas do processo\nSELECT \n    s.session_id AS [SPID],\n    s.login_name AS [Login],\n    s.host_name AS [Host],\n    s.program_name AS [Programa],\n    s.status AS [Status],\n    s.cpu_time AS [Tempo_CPU_ms],\n    s.memory_usage AS [Uso_Memoria_8KB],\n    s.total_elapsed_time AS [Tempo_Decorrido_ms],\n    s.reads AS [Leituras],\n    s.writes AS [Escritas],\n    s.logical_reads AS [Leituras_Logicas],\n    DB_NAME(r.database_id) AS [Database],\n    r.command AS [Comando],\n    r.wait_type AS [Tipo_Espera],\n    r.wait_time AS [Tempo_Espera_ms],\n    r.blocking_session_id AS [Bloqueado_Por],\n    r.open_transaction_count AS [Transacoes_Abertas],\n    r.percent_complete AS [Percentual_Completo]\nFROM sys.dm_exec_sessions s\nLEFT JOIN sys.dm_exec_requests r ON s.session_id = r.session_id\nWHERE s.session_id = @SPID;\n\n-- Query que está sendo executada\nSELECT \n    s.session_id AS [SPID],\n    SUBSTRING(qt.text, \n        (r.statement_start_offset/2) + 1,\n        ((CASE r.statement_end_offset\n            WHEN -1 THEN DATALENGTH(qt.text)\n            ELSE r.statement_end_offset\n        END - r.statement_start_offset)/2) + 1\n    ) AS [Query_Atual],\n    qt.text AS [Query_Completa],\n    qp.query_plan AS [Plano_Execucao]\nFROM sys.dm_exec_sessions s\nINNER JOIN sys.dm_exec_requests r ON s.session_id = r.session_id\nCROSS APPLY sys.dm_exec_sql_text(r.sql_handle) qt\nCROSS APPLY sys.dm_exec_query_plan(r.plan_handle) qp\nWHERE s.session_id = @SPID;\n\n-- Locks do processo\nSELECT \n    resource_type AS [Tipo_Recurso],\n    resource_database_id AS [Database_ID],\n    DB_NAME(resource_database_id) AS [Database],\n    resource_description AS [Descricao],\n    request_mode AS [Modo_Lock],\n    request_status AS [Status_Lock]\nFROM sys.dm_tran_locks\nWHERE request_session_id = @SPID;\n\n-- Últimas queries executadas pela sessão\nSELECT TOP 5\n    s.session_id AS [SPID],\n    s.login_name AS [Login],\n    st.text AS [Query],\n    qs.execution_count AS [Execucoes],\n    qs.total_elapsed_time/1000000 AS [Tempo_Total_seg],\n    qs.last_execution_time AS [Ultima_Execucao]\nFROM sys.dm_exec_sessions s\nINNER JOIN sys.dm_exec_connections c ON s.session_id = c.session_id\nCROSS APPLY sys.dm_exec_sql_text(c.most_recent_sql_handle) st\nLEFT JOIN sys.dm_exec_query_stats qs ON qs.sql_handle = c.most_recent_sql_handle\nWHERE s.session_id = @SPID\nORDER BY qs.last_execution_time DESC;\n",
-      "type": "BLOCK",
-      "source": "sync",
-      "ts": 1780424887558
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:45:13.334Z",
+      "updatedAt": "2026-06-03T21:46:52.953Z"
     },
     {
-      "id": "s_1780425018184_2",
+      "id": "0cf3b16d-1c71-4443-bddb-616eeec74aad",
       "name": "HD - Disco - Latencia",
       "content": "SELECT\n    DB_NAME(fs.database_id) AS [Database Name],\n    mf.physical_name,\n    fs.io_stall_read_ms,\n    fs.num_of_reads,\n    -- Média de latência de leitura em ms\n    CASE WHEN fs.num_of_reads = 0 THEN 0\n         ELSE fs.io_stall_read_ms / fs.num_of_reads END AS [Avg Read Stall (ms)],\n    fs.io_stall_write_ms,\n    fs.num_of_writes,\n    -- Média de latência de escrita em ms\n    CASE WHEN fs.num_of_writes = 0 THEN 0\n         ELSE fs.io_stall_write_ms / fs.num_of_writes END AS [Avg Write Stall (ms)],\n    fs.io_stall_read_ms + fs.io_stall_write_ms AS [Total IO Stall (ms)],\n    fs.num_of_reads + fs.num_of_writes AS [Total IOs]\nFROM\n    sys.dm_io_virtual_file_stats(NULL, NULL) AS fs\nINNER JOIN\n    sys.master_files AS mf ON fs.database_id = mf.database_id AND fs.file_id = mf.file_id\nORDER BY\n    [Total IO Stall (ms)] DESC;\n",
-      "type": "SELECT",
-      "source": "sync",
-      "ts": 1780424847496
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:45:28.512Z",
+      "updatedAt": "2026-06-03T21:46:44.752Z"
     },
     {
-      "id": "s_1780425018184_3",
+      "id": "fe06ec26-a965-4c86-b474-329ef715b832",
       "name": "DIMENSIONAMENTO CORRETO DO TEMPDB",
       "content": "-- =====================================================\n-- SCRIPT PARA DIMENSIONAMENTO CORRETO DO TEMPDB\n-- Coleta informações da máquina e ambiente SQL Server\n-- =====================================================\n\nPRINT '========================================='\nPRINT 'ANÁLISE COMPLETA PARA DIMENSIONAMENTO TEMPDB';\nPRINT '========================================='\nPRINT '';\n\n-- =====================================================\n-- 1. INFORMAÇÕES DE HARDWARE\n-- =====================================================\nPRINT '1. INFORMAÇÕES DE HARDWARE:';\nPRINT '----------------------------';\n\nSELECT \n    'CPU_CORES' as Categoria,\n    cpu_count as Valor,\n    CASE \n        WHEN cpu_count <= 4 THEN 'Recomendado: ' + CAST(cpu_count as varchar) + ' arquivos tempdb'\n        WHEN cpu_count <= 8 THEN 'Recomendado: ' + CAST(cpu_count as varchar) + ' arquivos tempdb'\n        ELSE 'Recomendado: 8 arquivos tempdb (máximo)'\n    END as Recomendacao\nFROM sys.dm_os_sys_info\nUNION ALL\nSELECT \n    'CPU_LOGICAS' as Categoria,\n    cpu_count as Valor,\n    'Total de processadores lógicos' as Recomendacao\nFROM sys.dm_os_sys_info\nUNION ALL\nSELECT \n    'MEMORIA_TOTAL_MB' as Categoria,\n    physical_memory_kb / 1024 as Valor,\n    CASE \n        WHEN physical_memory_kb / 1024 < 4096 THEN 'RAM baixa - TempDB inicial: 1GB por arquivo'\n        WHEN physical_memory_kb / 1024 < 16384 THEN 'RAM média - TempDB inicial: 2-4GB por arquivo'\n        ELSE 'RAM alta - TempDB inicial: 4-8GB por arquivo'\n    END as Recomendacao\nFROM sys.dm_os_sys_info;\n\nPRINT ''\n\n-- =====================================================\n-- 2. CONFIGURAÇÃO ATUAL DO TEMPDB\n-- =====================================================\nPRINT '2. CONFIGURAÇÃO ATUAL DO TEMPDB:';\nPRINT '--------------------------------';\n\nSELECT \n    f.name AS Nome_Arquivo,\n    f.physical_name AS Caminho_Fisico,\n    CAST(f.size * 8.0 / 1024 as DECIMAL(10,2)) AS Tamanho_Atual_MB,\n    CASE \n        WHEN f.max_size = -1 THEN 'Ilimitado'\n        WHEN f.max_size = 268435456 THEN 'Padrão (2TB)'\n        ELSE CAST(f.max_size * 8.0 / 1024 as VARCHAR) + ' MB'\n    END AS Tamanho_Maximo,\n    CASE \n        WHEN f.is_percent_growth = 1 THEN CAST(f.growth as VARCHAR) + '%'\n        ELSE CAST(f.growth * 8.0 / 1024 as VARCHAR) + ' MB'\n    END AS Crescimento,\n    CASE \n        WHEN f.is_percent_growth = 1 THEN ' PERCENTUAL (RUIM)'\n        ELSE ' FIXO (BOM)'\n    END AS Status_Crescimento\nFROM sys.master_files f\nWHERE f.database_id = DB_ID('tempdb')\nORDER BY f.file_id;\n\n-- Total atual do TempDB\nSELECT \n    COUNT(*) as Total_Arquivos_Atuais,\n    CAST(SUM(size * 8.0 / 1024) as DECIMAL(10,2)) as Total_MB_Atual,\n    CAST(SUM(size * 8.0 / 1024 / 1024) as DECIMAL(10,2)) as Total_GB_Atual\nFROM sys.master_files \nWHERE database_id = DB_ID('tempdb');\n\nPRINT '';\n\n-- =====================================================\n-- 3. USO ATUAL DO TEMPDB\n-- =====================================================\nPRINT '3. USO ATUAL DO TEMPDB:';\nPRINT '----------------------';\n\nSELECT \n    'ESPACO_TOTAL_MB' as Metrica,\n    CAST(SUM(size) * 8.0 / 1024 as DECIMAL(10,2)) as Valor\nFROM sys.master_files \nWHERE database_id = DB_ID('tempdb')\nUNION ALL\nSELECT \n    'ESPACO_USADO_MB' as Metrica,\n    CAST(SUM(user_object_reserved_page_count + internal_object_reserved_page_count) * 8.0 / 1024 as DECIMAL(10,2)) as Valor\nFROM sys.dm_db_file_space_usage \nWHERE database_id = DB_ID('tempdb')\nUNION ALL\nSELECT \n    'ESPACO_LIVRE_MB' as Metrica,\n    CAST(SUM(unallocated_extent_page_count) * 8.0 / 1024 as DECIMAL(10,2)) as Valor\nFROM sys.dm_db_file_space_usage \nWHERE database_id = DB_ID('tempdb');\n\n-- Detalhamento por tipo de uso\nSELECT \n    'Objetos_Usuario' as Tipo_Uso,\n    CAST(SUM(user_object_reserved_page_count) * 8.0 / 1024 as DECIMAL(10,2)) as MB_Usado,\n    CAST((SUM(user_object_reserved_page_count) * 100.0 / SUM(user_object_reserved_page_count + internal_object_reserved_page_count + unallocated_extent_page_count)) as DECIMAL(5,2)) as Percentual\nFROM sys.dm_db_file_space_usage \nWHERE database_id = DB_ID('tempdb')\nUNION ALL\nSELECT \n    'Objetos_Internos' as Tipo_Uso,\n    CAST(SUM(internal_object_reserved_page_count) * 8.0 / 1024 as DECIMAL(10,2)) as MB_Usado,\n    CAST((SUM(internal_object_reserved_page_count) * 100.0 / SUM(user_object_reserved_page_count + internal_object_reserved_page_count + unallocated_extent_page_count)) as DECIMAL(5,2)) as Percentual\nFROM sys.dm_db_file_space_usage \nWHERE database_id = DB_ID('tempdb')\nUNION ALL\nSELECT \n    'Espaco_Livre' as Tipo_Uso,\n    CAST(SUM(unallocated_extent_page_count) * 8.0 / 1024 as DECIMAL(10,2)) as MB_Usado,\n    CAST((SUM(unallocated_extent_page_count) * 100.0 / SUM(user_object_reserved_page_count + internal_object_reserved_page_count + unallocated_extent_page_count)) as DECIMAL(5,2)) as Percentual\nFROM sys.dm_db_file_space_usage \nWHERE database_id = DB_ID('tempdb');\n\nPRINT ''\n\n-- =====================================================\n-- 4. INFORMAÇÕES DE DISCO\n-- =====================================================\nPRINT '4. INFORMAÇÕES DE DISCO:';\nPRINT '-----------------------';\n\n-- Verificar espaço nos drives onde estão os arquivos tempdb\nWITH DiskInfo AS (\n    SELECT DISTINCT \n        LEFT(f.physical_name, 3) as Drive,\n        f.physical_name\n    FROM sys.master_files f\n    WHERE f.database_id = DB_ID('tempdb')\n)\nSELECT \n    vs.volume_mount_point as Drive,\n    CAST(vs.total_bytes / 1024.0 / 1024 / 1024 as DECIMAL(10,2)) as Total_GB,\n    CAST(vs.available_bytes / 1024.0 / 1024 / 1024 as DECIMAL(10,2)) as Disponivel_GB,\n    CAST(((vs.total_bytes - vs.available_bytes) * 100.0 / vs.total_bytes) as DECIMAL(5,2)) as Uso_Percentual,\n    CASE \n        WHEN vs.available_bytes / 1024.0 / 1024 / 1024 > 50 THEN ' Espaço suficiente'\n        WHEN vs.available_bytes / 1024.0 / 1024 / 1024 > 20 THEN ' Atenção ao espaço'\n        ELSE ' Pouco espaço disponível'\n    END as Status_Espaco\nFROM sys.master_files mf\nCROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs\nWHERE mf.database_id = DB_ID('tempdb')\nGROUP BY vs.volume_mount_point, vs.total_bytes, vs.available_bytes;\n\nPRINT ''\n\n-- =====================================================\n-- 5. HISTÓRICO DE PERFORMANCE (WAIT STATS)\n-- =====================================================\nPRINT '5. WAIT STATS RELACIONADOS AO TEMPDB:';\nPRINT '------------------------------------';\n\nSELECT \n    wait_type as Tipo_Espera,\n    waiting_tasks_count as Tarefas_Esperando,\n    CAST(wait_time_ms / 1000.0 as DECIMAL(10,2)) as Tempo_Espera_Seg,\n    CAST(signal_wait_time_ms / 1000.0 as DECIMAL(10,2)) as Tempo_Sinal_Seg,\n    CASE \n        WHEN wait_time_ms > 10000 THEN ' Problema de performance'\n        WHEN wait_time_ms > 5000 THEN ' Monitorar'\n        ELSE ' Normal'\n    END as Status\nFROM sys.dm_os_wait_stats \nWHERE wait_type IN (\n    'TEMPDB',\n    'PAGELATCH_UP',\n    'PAGELATCH_SH',\n    'PAGELATCH_EX',\n    'PAGEIOLATCH_UP',\n    'PAGEIOLATCH_SH',\n    'PAGEIOLATCH_EX'\n)\nAND wait_time_ms > 0\nORDER BY wait_time_ms DESC;\n\nPRINT '';\n\n-- =====================================================\n-- 6. RECOMENDAÇÕES PERSONALIZADAS\n-- =====================================================\nPRINT '6. RECOMENDAÇÕES PERSONALIZADAS:';\nPRINT '-------------------------------';\n\nDECLARE @cpu_count int, @memory_gb decimal(10,2), @current_files int, @current_size_gb decimal(10,2)\n\nSELECT @cpu_count = cpu_count FROM sys.dm_os_sys_info\nSELECT @memory_gb = physical_memory_kb / 1024.0 / 1024 FROM sys.dm_os_sys_info\nSELECT @current_files = COUNT(*) FROM sys.master_files WHERE database_id = DB_ID('tempdb')\nSELECT @current_size_gb = SUM(size * 8.0 / 1024 / 1024) FROM sys.master_files WHERE database_id = DB_ID('tempdb')\n\nDECLARE @recommended_files int, @recommended_size_per_file_gb decimal(10,2)\n\n-- Calcular número recomendado de arquivos\nSET @recommended_files = CASE \n    WHEN @cpu_count <= 4 THEN @cpu_count\n    WHEN @cpu_count <= 8 THEN @cpu_count  \n    ELSE 8 \nEND\n\n-- Calcular tamanho recomendado por arquivo\nSET @recommended_size_per_file_gb = CASE\n    WHEN @memory_gb < 4 THEN 1\n    WHEN @memory_gb < 16 THEN CEILING(@current_size_gb / @recommended_files)\n    ELSE CEILING((@current_size_gb * 1.2) / @recommended_files)  -- 20% a mais\nEND\n\n-- Ajuste mínimo de 2GB por arquivo para ambientes com mais memória\nIF @memory_gb >= 16 AND @recommended_size_per_file_gb < 2\n    SET @recommended_size_per_file_gb = 2\n\nSELECT \n    'Configuração Atual' as Aspecto,\n    CAST(@current_files as varchar) + ' arquivos, ' + \n    CAST(@current_size_gb as varchar) + ' GB total' as Valor_Atual,\n    'N/A' as Valor_Recomendado\nUNION ALL\nSELECT \n    'Configuração Recomendada' as Aspecto,\n    'N/A' as Valor_Atual,\n    CAST(@recommended_files as varchar) + ' arquivos, ' + \n    CAST(@recommended_files * @recommended_size_per_file_gb as varchar) + ' GB total (' +\n    CAST(@recommended_size_per_file_gb as varchar) + ' GB por arquivo)' as Valor_Recomendado\nUNION ALL\nSELECT \n    'Crescimento Recomendado' as Aspecto,\n    'Verificar configuração atual acima' as Valor_Atual,\n    CASE \n        WHEN @recommended_size_per_file_gb <= 2 THEN '256 MB fixo'\n        WHEN @recommended_size_per_file_gb <= 4 THEN '512 MB fixo'\n        ELSE '1024 MB fixo'\n    END as Valor_Recomendado;\n\nPRINT '';\n\n-- =====================================================\n-- 7. SCRIPT DE IMPLEMENTAÇÃO GERADO AUTOMATICAMENTE\n-- =====================================================\nPRINT '7. SCRIPT DE IMPLEMENTAÇÃO:';\nPRINT '--------------------------';\nPRINT '-- Execute este script após fazer backup completo';\nPRINT '-- ATENÇÃO: Requer reinicialização do SQL Server';\nPRINT '';\n\nDECLARE @sql_modify NVARCHAR(MAX) = ''\nDECLARE @sql_remove NVARCHAR(MAX) = ''\nDECLARE @growth_mb int = CASE \n    WHEN @recommended_size_per_file_gb <= 2 THEN 256\n    WHEN @recommended_size_per_file_gb <= 4 THEN 512\n    ELSE 1024\nEND\n\n-- Script para modificar arquivos existentes\nSELECT @sql_modify = @sql_modify + \n'ALTER DATABASE tempdb MODIFY FILE (NAME = ''' + name + ''', SIZE = ' + \nCAST(@recommended_size_per_file_gb * 1024 as varchar) + 'MB, FILEGROWTH = ' + \nCAST(@growth_mb as varchar) + 'MB);' + CHAR(13) + CHAR(10)\nFROM sys.master_files \nWHERE database_id = DB_ID('tempdb') \nAND file_id <= @recommended_files\n\n-- Script para remover arquivos excessivos\nIF @current_files > @recommended_files\nBEGIN\n    SELECT @sql_remove = @sql_remove + \n    '-- ALTER DATABASE tempdb REMOVE FILE ' + name + '; -- Execute APÓS reinicializar' + CHAR(13) + CHAR(10)\n    FROM sys.master_files \n    WHERE database_id = DB_ID('tempdb') \n    AND file_id > @recommended_files\nEND\n\n-- Script para adicionar arquivos se necessário\nIF @current_files < @recommended_files\nBEGIN\n    DECLARE @i int = @current_files + 1\n    WHILE @i <= @recommended_files\n    BEGIN\n        SET @sql_modify = @sql_modify + \n        'ALTER DATABASE tempdb ADD FILE (NAME = ''tempdev' + CAST(@i as varchar) + \n        ''', FILENAME = ''C:\\TempDB\\tempdev' + CAST(@i as varchar) + '.ndf'', SIZE = ' +\n        CAST(@recommended_size_per_file_gb * 1024 as varchar) + 'MB, FILEGROWTH = ' + \n        CAST(@growth_mb as varchar) + 'MB);' + CHAR(13) + CHAR(10)\n        \n        SET @i = @i + 1\n    END\nEND\n\nPRINT 'USE master;'\nPRINT 'GO'\nPRINT '';\nPRINT @sql_modify;\n\nIF LEN(@sql_remove) > 0\nBEGIN\n    PRINT ''\n    PRINT '-- SCRIPTS PARA EXECUTAR APÓS REINICIALIZAR O SQL SERVER:'\n    PRINT @sql_remove\nEND\n\nPRINT ''\nPRINT '========================================='\nPRINT 'ANÁLISE CONCLUÍDA!'\nPRINT 'Revise as recomendações antes de aplicar'\nPRINT '========================================='\n",
-      "type": "OTHER",
-      "source": "sync",
-      "ts": 1780424816581
+      "categoryId": "6c305c7c-fedb-494b-8ce1-df03f92bb825",
+      "folderId": "5287fce4-e336-4db9-9160-b2963eadf1d9",
+      "createdAt": "2026-06-03T21:47:44.645Z",
+      "updatedAt": "2026-06-03T21:47:44.645Z"
     },
     {
-      "id": "s_1780425018184_4",
+      "id": "ff84dbfd-4417-4399-a874-833820a448e2",
       "name": "Verificar banco parado",
       "content": "SELECT \n    DER.session_id AS [IdSessao],\n    COALESCE(DB_NAME(s.database_id), 'N/A') AS [NomeBanco],\n    DER.command AS [TipoComando],\n    CASE \n        WHEN DER.status = 'background' THEN 'Recuperação em andamento'\n        ELSE DER.status \n    END AS [Status],\n\tDER.percent_complete AS [Progresso_%],\n    -- Formato hh:mi:ss:mmm\n    CONVERT(VARCHAR(20), DATEADD(ms, DER.estimated_completion_time, 0), 114) AS [TempoRestante_Estimado],\n    DATEADD(ms, DER.estimated_completion_time, GETDATE()) AS [DataHora_Termino_Estimado],\n    CONVERT(VARCHAR(20), DATEADD(ms, DER.total_elapsed_time, 0), 114) AS [TempoDecorrido], \n    DER.start_time AS [DataHora_Inicio],\n    DER.blocking_session_id AS [Sessao_Bloqueadora],\n    DER.wait_type AS [Tipo_Espera],\n    DER.wait_time AS [Tempo_Espera_ms],\n    DER.last_wait_type AS [Ultimo_Tipo_Espera],\n    DER.wait_resource AS [Recurso_Espera],\n    DER.cpu_time AS [Tempo_CPU_ms],\n\n    -- Conversões para MB (páginas * 8KB => MB = páginas / 128)\n    CAST(DER.logical_reads / 128.0 AS DECIMAL(18,2)) AS [Leitura_Logica_MB],\n    CAST(DER.reads         / 128.0 AS DECIMAL(18,2)) AS [Leitura_Fisica_MB],\n    CAST(DER.writes        / 128.0 AS DECIMAL(18,2)) AS [Gravacao_MB],\n\n    SUBSTRING(\n        REPLACE(REPLACE(\n            REPLACE(SUBSTRING(\n                qt.text, \n                (DER.statement_start_offset/2)+1, \n                (\n                    (CASE DER.statement_end_offset\n                        WHEN -1 THEN DATALENGTH(qt.text)\n                        ELSE DER.statement_end_offset\n                    END - DER.statement_start_offset)/2\n                ) + 1\n            ), CHAR(10), ' '), CHAR(13), ' '), '  ', ' '), \n        1, 1000) AS [Comando_Atual]\nFROM \n    sys.dm_exec_requests AS DER\nLEFT JOIN \n    sys.dm_exec_sessions AS s \n        ON DER.session_id = s.session_id\nOUTER APPLY \n    sys.dm_exec_sql_text(DER.sql_handle) AS qt\nWHERE \n    DER.command IN ('DB STARTUP', 'RECOVERY', 'ROLLBACK', 'BACKUP', 'RESTORE', 'DBCC')\n    AND DER.percent_complete > 0\nORDER BY \n    DER.start_time DESC;\n",
-      "type": "SELECT",
-      "source": "sync",
-      "ts": 1780424776226
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:48:05.407Z",
+      "updatedAt": "2026-06-03T21:48:05.407Z"
     },
     {
-      "id": "s_1780425018184_5",
+      "id": "8b8f778f-fda4-4248-a8b9-ce66ebdb98a6",
       "name": "TOP 20 indices mais fragmentados do banco",
       "content": "SELECT TOP 20\n    DB_NAME() AS database_name,\n    OBJECT_SCHEMA_NAME(ips.object_id) AS schema_name,\n    OBJECT_NAME(ips.object_id) AS table_name,\n    i.name AS index_name,\n    i.type_desc AS index_type,\n    ips.avg_fragmentation_in_percent,\n    ips.fragment_count,\n    ips.page_count,\n    ips.record_count,\n    ips.avg_page_space_used_in_percent,\n    CASE \n        WHEN ips.avg_fragmentation_in_percent <= 5 THEN 'Bom'\n        WHEN ips.avg_fragmentation_in_percent <= 30 THEN 'Reorganizar'\n        ELSE 'Reconstruir'\n    END AS recomendacao,\n    -- SCRIPT AUTOMATIZADO:\n    CASE \n        WHEN ips.avg_fragmentation_in_percent <= 5 THEN \n            '-- Índice OK (Fragmentação: ' + CAST(ROUND(ips.avg_fragmentation_in_percent, 2) AS VARCHAR(10)) + '%)'\n        WHEN ips.avg_fragmentation_in_percent <= 30 THEN \n            'ALTER INDEX [' + i.name + '] ON [' + OBJECT_SCHEMA_NAME(ips.object_id) + '].[' + OBJECT_NAME(ips.object_id) + '] REORGANIZE;'\n        ELSE \n            'ALTER INDEX [' + i.name + '] ON [' + OBJECT_SCHEMA_NAME(ips.object_id) + '].[' + OBJECT_NAME(ips.object_id) + '] REBUILD;'\n    END AS script_execucao\nFROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'DETAILED') ips\nJOIN sys.indexes i ON ips.object_id = i.object_id AND ips.index_id = i.index_id\nJOIN sys.objects o ON ips.object_id = o.object_id\nWHERE ips.index_id > 0 \n  AND ips.page_count > 10 \n  AND o.type = 'U' -- Apenas tabelas de usuário\n  AND ips.avg_fragmentation_in_percent > 0\nORDER BY ips.avg_fragmentation_in_percent DESC;",
-      "type": "SELECT",
-      "source": "sync",
-      "ts": 1780424571001
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:48:23.043Z",
+      "updatedAt": "2026-06-03T21:48:23.043Z"
     },
     {
-      "id": "s_1780425018184_6",
+      "id": "2bdaffb6-b599-4407-8a36-e07bdfbe8e7a",
       "name": "TOP 10 Scrip rodando uso CPU",
       "content": "SELECT TOP 10\n    r.session_id,\n    s.login_name,\n    r.cpu_time AS CPU_ms,\n    r.total_elapsed_time AS Tempo_Total_ms,\n    r.logical_reads,\n    r.reads,\n    r.writes,\n    DB_NAME(r.database_id) AS Banco,\n    SUBSTRING(t.text,\n        (r.statement_start_offset / 2) + 1,\n        ((CASE r.statement_end_offset\n            WHEN -1 THEN DATALENGTH(t.text)\n            ELSE r.statement_end_offset\n        END - r.statement_start_offset) / 2) + 1) AS Query\nFROM sys.dm_exec_requests r\nJOIN sys.dm_exec_sessions s ON r.session_id = s.session_id\nCROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t\nORDER BY r.cpu_time DESC;\n",
-      "type": "SELECT",
-      "source": "sync",
-      "ts": 1780424461097
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:48:38.447Z",
+      "updatedAt": "2026-06-03T21:48:38.447Z"
     },
     {
-      "id": "s_1780425018184_7",
+      "id": "89098bd6-dc66-4cbc-aaf4-74cc597c919b",
       "name": "Analisar bloqueando",
       "content": "SELECT \n    -- Informações do processo bloqueante\n    bloqueante.session_id AS [SessaoBloqueante],\n    bloqueante_sql.text AS [ComandoBloqueandoSQL],\n    \n    -- Informações do processo aguardando\n    aguardando.session_id AS [SessaoAguardando],\n    aguardando.blocking_session_id AS [BloqueadoPor],\n    aguardando_sql.text AS [ComandoAguardandoSQL],\n    \n    -- Informações da sessão\n    sess.host_name AS [Computador],\n    sess.login_name AS [Login],\n    sess.program_name AS [Aplicativo],\n    \n    -- Status e timing\n    aguardando.status AS [Status],\n    aguardando.command AS [TipoComando],\n    aguardando.wait_type AS [TipoEspera],\n    aguardando.wait_time AS [TempoEspera_ms],\n    aguardando.last_wait_type AS [UltimoTipoEspera],\n    \n    -- Informações adicionais úteis\n    aguardando.cpu_time AS [TempoCPU_ms],\n    aguardando.logical_reads AS [LeiturasLogicas],\n    aguardando.reads AS [Leituras],\n    aguardando.writes AS [Escritas],\n    \n    -- Database context\n    DB_NAME(aguardando.database_id) AS [BaseDados],\n    \n    -- Timing information\n    aguardando.start_time AS [HoraInicio],\n    sess.last_request_start_time AS [UltimaRequisicao]\n\nFROM sys.dm_exec_requests aguardando\n    -- Join com sessões para obter informações do cliente\n    INNER JOIN sys.dm_exec_sessions sess ON aguardando.session_id = sess.session_id\n    \n    -- Join com sessões bloqueantes\n    LEFT JOIN sys.dm_exec_sessions bloqueante ON aguardando.blocking_session_id = bloqueante.session_id\n    \n    -- Obter texto SQL do comando aguardando\n    CROSS APPLY sys.dm_exec_sql_text(aguardando.sql_handle) AS aguardando_sql\n    \n    -- Obter texto SQL do comando bloqueante (se existir)\n    OUTER APPLY (\n        SELECT req.sql_handle\n        FROM sys.dm_exec_requests req \n        WHERE req.session_id = aguardando.blocking_session_id\n    ) AS bloqueante_handle\n    OUTER APPLY sys.dm_exec_sql_text(bloqueante_handle.sql_handle) AS bloqueante_sql\n\nWHERE \n    aguardando.blocking_session_id > 0  -- Apenas processos bloqueados\n    AND aguardando.session_id <> @@SPID  -- Excluir nossa própria sessão\n\nORDER BY \n    aguardando.blocking_session_id,\naguardando.wait_time DESC;\n",
-      "type": "SELECT",
-      "source": "sync",
-      "ts": 1780424317707
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:48:53.235Z",
+      "updatedAt": "2026-06-03T21:48:53.235Z"
     },
     {
-      "id": "s_1780425018184_8",
+      "id": "4e7351c3-bd03-4adc-97c4-23b2d0974188",
       "name": "Sugestao desfrag índice por tabela",
       "content": "SELECT \n    OBJECT_NAME(ips.object_id) AS table_name,\n    i.name AS index_name,\n    i.type_desc AS index_type,\n    ips.avg_fragmentation_in_percent,\n    ips.fragment_count,\n    ips.page_count,\n    ips.record_count,\n    ips.avg_page_space_used_in_percent,\n    CASE \n        WHEN ips.avg_fragmentation_in_percent <= 5 THEN 'Bom'\n        WHEN ips.avg_fragmentation_in_percent <= 30 THEN 'Reorganizar'\n        ELSE 'Reconstruir'\n    END AS recomendacao,\n    -- SCRIPT AUTOMATIZADO:\n    CASE \n        WHEN ips.avg_fragmentation_in_percent <= 5 THEN \n            '-- Índice OK'\n        WHEN ips.avg_fragmentation_in_percent <= 30 THEN \n            'ALTER INDEX [' + i.name + '] ON ' + OBJECT_NAME(ips.object_id) + ' REORGANIZE;'\n        ELSE \n            'ALTER INDEX [' + i.name + '] ON '+OBJECT_NAME(ips.object_id) +' REBUILD;'\n    END AS script_execucao\nFROM sys.dm_db_index_physical_stats(DB_ID(), OBJECT_ID('FIN_ALancamentoFinanceiro'), NULL, NULL, 'DETAILED') ips\nJOIN sys.indexes i ON ips.object_id = i.object_id AND ips.index_id = i.index_id\nWHERE ips.index_id > 0 \n  AND ips.page_count > 10 \nORDER BY ips.avg_fragmentation_in_percent DESC",
-      "type": "SELECT",
-      "source": "sync",
-      "ts": 1780424299413
+      "categoryId": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "folderId": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "createdAt": "2026-06-03T21:49:08.425Z",
+      "updatedAt": "2026-06-03T21:49:08.425Z"
     }
-  ]
+  ],
+  "folders": [
+    {
+      "id": "714009ca-f6d6-4128-918c-5a5aeb3fe6e4",
+      "name": "SQL",
+      "parentId": null,
+      "createdAt": "2026-06-03T21:33:00.734Z"
+    },
+    {
+      "id": "beaa3d14-4bdc-44cf-9416-3a3748466e07",
+      "name": "SQL SERVER",
+      "parentId": "714009ca-f6d6-4128-918c-5a5aeb3fe6e4",
+      "createdAt": "2026-06-03T21:33:11.458Z"
+    },
+    {
+      "id": "173b7545-cac1-4664-8d0b-bb193b3d6572",
+      "name": "Consultas",
+      "parentId": "beaa3d14-4bdc-44cf-9416-3a3748466e07",
+      "createdAt": "2026-06-03T21:46:22.638Z"
+    },
+    {
+      "id": "5287fce4-e336-4db9-9160-b2963eadf1d9",
+      "name": "Configuracao",
+      "parentId": "beaa3d14-4bdc-44cf-9416-3a3748466e07",
+      "createdAt": "2026-06-03T21:46:32.053Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "6c305c7c-fedb-494b-8ce1-df03f92bb825",
+      "name": "SELECT",
+      "color": "#4ea8de",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "401752a3-5ac0-4485-bd5a-18ac39416c5a",
+      "name": "INSERT",
+      "color": "#48b860",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "5cac52f3-c1e7-4ba4-8868-b84533c125cb",
+      "name": "UPDATE",
+      "color": "#d4943a",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "b0495aa0-abb0-4023-a438-028504439f54",
+      "name": "DELETE",
+      "color": "#e04050",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "4418adb3-53ba-49c1-a3fb-9a8b73a39007",
+      "name": "CREATE",
+      "color": "#8b5cf6",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "79b3d083-8fe8-4b99-b9ee-ccd659abdfdd",
+      "name": "ALTER",
+      "color": "#06b6d4",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "20795508-34d7-4a3a-a53c-496714026ce6",
+      "name": "DROP",
+      "color": "#ef4444",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "ac14fd3d-bd3a-4c9e-ba83-a54dc92f00ae",
+      "name": "PROCEDURE",
+      "color": "#f59e0b",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "228560df-f34e-48b6-9bf8-38541fa6dba4",
+      "name": "FUNCTION",
+      "color": "#10b981",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "08b40f36-0608-4f56-9dd7-13f86dfd17f1",
+      "name": "TRIGGER",
+      "color": "#ec4899",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "c334a3f6-7ece-4e81-a2e2-5373ffb2a4bf",
+      "name": "VIEW",
+      "color": "#6366f1",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "351cffe4-8400-40f7-912f-45c9986736b4",
+      "name": "INDEX",
+      "color": "#14b8a6",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "f2b0e346-7054-4aaf-952b-868177a12517",
+      "name": "OTHER",
+      "color": "#8888a0",
+      "createdAt": "2026-06-03T21:25:48.489Z"
+    },
+    {
+      "id": "8e0facff-b588-4406-9158-9ba93e1f50bb",
+      "name": "Analise Travamento",
+      "color": "#d4943a",
+      "createdAt": "2026-06-03T21:27:21.373Z"
+    }
+  ],
+  "settings": {
+    "remoteUrl": "",
+    "autoSync": false,
+    "lastSync": null
+  },
+  "exportedAt": "2026-06-03T22:19:18.648Z"
 }
