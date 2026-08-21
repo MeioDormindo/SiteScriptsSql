@@ -58,7 +58,6 @@
     Array.prototype.forEach.call(select.options,function(option){option.textContent=text(option.value)});
     Array.prototype.forEach.call(sortSelect.options,function(option){option.textContent=text(option.value)});
     applySize(saved);
-    formatPreviews(grid);
   }
 
   var originalRenderMain=window.renderMain;
