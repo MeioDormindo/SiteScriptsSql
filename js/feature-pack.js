@@ -8,6 +8,9 @@
   var originalOpenEdit=window.openEditScript;
   var originalSave=window.saveScript;
   var originalView=window.openViewScript;
+  var originalSettings=window.openSettings;
+
+  TR.es=Object.assign({},TR.pt,{allScripts:'Todos los scripts',folders:'Carpetas',categories:'Categorías',newScript:'Nuevo script',importDB:'Importar base',backupDB:'Copia',settings:'Configuración',search:'Buscar scripts...',noFolder:'Sin carpeta',save:'Guardar',cancel:'Cancelar',delete:'Eliminar',edit:'Editar',view:'Ver',copy:'Copiar',copied:'¡Copiado!',emptyState:'No se encontraron scripts',emptySub:'Crea un script o importa una base de datos',importTxt:'Importar .txt',settingsTitle:'Configuración',favorite:'Favorito',scriptSaved:'Script guardado',scriptDeleted:'Script eliminado',folderSaved:'Carpeta guardada',folderDeleted:'Carpeta eliminada',catSaved:'Categoría guardada',catDeleted:'Categoría eliminada',dark:'Oscuro',light:'Claro',scripts:'scripts',chars:'caracteres',lines:'líneas'});
 
   function savePref(){localStorage.setItem(prefKey,JSON.stringify(pref))}
   function script(id){return S.data.scripts.find(function(item){return item.id===id})}
@@ -28,10 +31,10 @@
     });
     return result;
   }
-      var rawSearch=S.filter.search;S.filter.search=filter.text.join(' ');var list=originalFilter();S.filter.search=rawSearch;
-      return list.filter(function(item){
+  window.getFiltered=function(){
     var filter=getAdvancedFilter();
-    var list=originalFilter().filter(function(item){
+    var rawSearch=S.filter.search;S.filter.search=filter.text.join(' ');var list=originalFilter();S.filter.search=rawSearch;
+    return list.filter(function(item){
       var hay=[item.name,item.content,getFolderPath(item.folderId)||'',(S.data.categories.find(function(c){return c.id===item.categoryId})||{}).name||'',tagsOf(item).join(' ')].join(' ').toLowerCase();
       if(filter.text.length&&!filter.text.every(function(term){return hay.indexOf(term.toLowerCase())>=0}))return false;
       if(filter.tags.length&&!filter.tags.every(function(tag){return tagsOf(item).some(function(itemTag){return itemTag.toLowerCase()===tag})}))return false;
@@ -105,6 +108,23 @@
     originalView(id);var foot=document.getElementById('mFoot');if(!foot||foot.querySelector('[data-history]'))return;
     var button=document.createElement('button');button.className='btn btn-sm';button.setAttribute('data-history','true');button.textContent=featureText('Histórico','History');button.onclick=function(){showScriptHistory(id)};foot.insertBefore(button,foot.firstChild);
   };
+  window.resetApplication=function(){
+    showConfirm(featureText('Isso apagará todos os scripts, pastas, categorias personalizadas, favoritos e preferências. O arquivo JSON de backup não será apagado. Continuar?','This will delete all scripts, folders, custom categories, favorites and preferences. The backup JSON file will not be deleted. Continue?'),async function(){
+      S.data={scripts:[],folders:[],categories:DEF_CATS.map(function(category){return{id:uid(),name:category.name,color:category.color,createdAt:now()}}),settings:{remoteUrl:'',autoSync:false,lastSync:null,language:S.lang,theme:S.theme}};
+      S.filter={folderId:null,categoryId:null,search:''};
+      localStorage.removeItem('sqlScriptCardSize');localStorage.removeItem('sqlScriptSort');localStorage.removeItem(prefKey);
+      S.fileHandle=null;S.fileName=null;await save();closeModal();render();showToast(featureText('Aplicativo resetado','Application reset'),'success');
+    });
+  };
+  window.resetar=window.resetApplication;
+  function addResetButton(){
+    var foot=document.getElementById('mFoot');if(!foot||foot.querySelector('[data-reset]'))return;
+    var button=document.createElement('button');button.className='btn btn-danger btn-sm';button.setAttribute('data-reset','true');button.textContent=featureText('Resetar aplicativo','Reset application');button.onclick=resetApplication;foot.insertBefore(button,foot.firstChild);
+  }
+  window.openSettings=function(){
+    originalSettings();addResetButton();setTimeout(addResetButton,0);
+  };
+  window.toggleLang=function(){var languages=['pt','en','es'];var index=languages.indexOf(S.lang);setLang(languages[(index+1)%languages.length]);S.data.settings.language=S.lang;save();render()};
   window.addEventListener('keydown',function(event){
     var editing=/input|textarea|select/i.test(event.target.tagName);if(event.ctrlKey||event.metaKey){if(event.key.toLowerCase()==='n'&&!editing){event.preventDefault();openNewScript()}if(event.key.toLowerCase()==='s'&&editing){event.preventDefault();var saveButton=document.querySelector('#mFoot .btn-accent');if(saveButton)saveButton.click()}}else if(event.key==='f'&&!editing){var item=S.data.scripts.find(function(s){return s.id===S.filter.activeScript});if(item)toggleFlag(item.id,'favorite')}
   });
