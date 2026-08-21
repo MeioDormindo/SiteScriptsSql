@@ -35,6 +35,7 @@
     });
   }
   function addControl(){
+    return;
     var main=document.getElementById('mainContent');
     var grid=main&&main.firstElementChild;
     if(!main||!grid||grid.classList.contains('empty-state'))return;

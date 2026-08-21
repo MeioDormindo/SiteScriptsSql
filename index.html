@@ -20,6 +20,7 @@
       <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx3)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input class="inp" id="searchInput" style="padding-left:32px;height:34px;font-size:13px;border-radius:20px" oninput="onSearch(this.value)">
     </div>
+    <div class="quick-filters"><button class="btn btn-sm btn-ghost" id="quickFavorite" onclick="toggleQuickFilter('favorite')">★ <span class="hide-m">Favoritos</span></button><button class="btn btn-sm btn-ghost" id="quickPinned" onclick="toggleQuickFilter('pinned')">⌃ <span class="hide-m">Fixados</span></button></div>
     <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
       <button class="btn btn-sm" onclick="openNewScript()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg><span class="hide-m" data-t="newScript"></span></button>
       <button class="btn btn-sm" onclick="importTxtScript()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg><span class="hide-m" data-t="importTxt"></span></button>
