@@ -2,6 +2,8 @@
   var prefKey='sqlScriptFeatures';
   var pref=JSON.parse(localStorage.getItem(prefKey)||'{}');
   pref.view=pref.view==='list'||pref.view==='table'?pref.view:'cards';
+  pref.pageSize=[12,24,48].indexOf(Number(pref.pageSize))>=0?Number(pref.pageSize):12;
+  pref.page=Number(pref.page)>0?Number(pref.page):1;
   var originalRender=window.renderMain;
   var originalFilter=window.getFiltered;
   var originalOpenNew=window.openNewScript;
@@ -58,10 +60,20 @@
   }
   function addFeatureTools(main,grid){
     var tools=document.createElement('div');tools.className='script-tools';
-    tools.innerHTML='<label>'+featureText('Filtro','Filter')+'</label><select class="inp" id="featureFilter"><option value="">'+featureText('Todos','All')+'</option><option value="favorite">'+featureText('Favoritos','Favorites')+'</option><option value="pinned">'+featureText('Fixados','Pinned')+'</option></select><div class="script-tool-spacer"></div><label>'+featureText('Visualização','View')+'</label><select class="inp" id="featureView"><option value="cards">'+featureText('Cards','Cards')+'</option><option value="list">'+featureText('Lista','List')+'</option><option value="table">'+featureText('Tabela','Table')+'</option></select>';
+    tools.innerHTML='<label>'+featureText('Filtro','Filter')+'</label><select class="inp" id="featureFilter"><option value="">'+featureText('Todos','All')+'</option><option value="favorite">'+featureText('Favoritos','Favorites')+'</option><option value="pinned">'+featureText('Fixados','Pinned')+'</option></select><label>'+featureText('Por página','Per page')+'</label><select class="inp" id="featurePageSize"><option value="12">12</option><option value="24">24</option><option value="48">48</option></select><div class="script-tool-spacer"></div><label>'+featureText('Visualização','View')+'</label><select class="inp" id="featureView"><option value="cards">'+featureText('Blocos','Blocks')+'</option><option value="list">'+featureText('Linhas','Rows')+'</option><option value="table">'+featureText('Tabela','Table')+'</option></select>';
     main.insertBefore(tools,grid);var view=tools.querySelector('#featureView');view.value=pref.view;var filter=tools.querySelector('#featureFilter');filter.value=(S.filter.search==='favorite'||S.filter.search==='pinned')?S.filter.search:'';
+    var pageSize=tools.querySelector('#featurePageSize');pageSize.value=String(pref.pageSize);
     view.addEventListener('change',function(){pref.view=this.value;savePref();render()});
     filter.addEventListener('change',function(){onSearch(this.value);render()});
+    pageSize.addEventListener('change',function(){pref.pageSize=Number(this.value);pref.page=1;savePref();render()});
+  }
+  function updatePagination(main,grid){
+    var cards=Array.prototype.slice.call(grid.querySelectorAll('.card'));var totalPages=Math.max(1,Math.ceil(cards.length/pref.pageSize));pref.page=Math.min(pref.page,totalPages);var start=(pref.page-1)*pref.pageSize;
+    cards.forEach(function(card,index){card.style.display=index>=start&&index<start+pref.pageSize?'':'none'});
+    var old=document.getElementById('scriptPagination');if(old)old.remove();if(totalPages<=1)return;
+    var nav=document.createElement('div');nav.id='scriptPagination';nav.className='script-pagination';
+    function add(label,page,active){var button=document.createElement('button');button.className='btn btn-sm'+(active?' is-current':'');button.textContent=label;button.disabled=active;button.onclick=function(){pref.page=page;savePref();render()};nav.appendChild(button)}
+    if(pref.page>1)add('‹',pref.page-1,false);for(var page=1;page<=totalPages;page++){if(totalPages>7&&page>2&&page<totalPages-1&&Math.abs(page-pref.page)>1){if(!nav.querySelector('[data-gap]')){var gap=document.createElement('span');gap.dataset.gap='true';gap.textContent='...';nav.appendChild(gap)}continue}add(String(page),page,page===pref.page)}if(pref.page<totalPages)add('›',pref.page+1,false);main.appendChild(nav);
   }
   function enhanceCards(grid){
     grid.classList.add(pref.view==='cards'?'script-grid':'script-'+pref.view);
@@ -81,6 +93,7 @@
     originalRender();normalizeRecords();var main=document.getElementById('mainContent');var grid=main&&(main.querySelector('.script-grid')||main.firstElementChild);
     if(!grid||grid.classList.contains('empty-state'))return;
     addFeatureTools(main,grid);enhanceCards(grid);
+    updatePagination(main,grid);
   };
   function addTagInput(item){
     var body=document.getElementById('mBody');if(!body||body.querySelector('#featureTags'))return;

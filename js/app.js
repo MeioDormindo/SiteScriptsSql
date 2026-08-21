@@ -101,13 +101,13 @@ function openModal(hd,bd,ft,fs){var box=document.getElementById('modalBox');docu
 function closeModal(){document.getElementById('modalOvl').classList.remove('active');document.getElementById('modalBox').classList.remove('modal-fs')}
 
 /* ===== VISUALIZAR - texto puro via textContent ===== */
-var _viewHL=false;
+var _viewHL=true;
 function openViewScript(id){
   var s=S.data.scripts.find(function(x){return x.id===id});if(!s)return;
   var cat=S.data.categories.find(function(c){return c.id===s.categoryId});
   var fp=getFolderPath(s.folderId);
   var lc=s.content?(s.content.match(/\n/g)||[]).length+1:0;
-  _viewHL=false;
+  _viewHL=true;
   var hd='<div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6"/></svg><span style="font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+'</span></div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><button class="icon-btn" id="hlToggle" onclick="toggleHL(\''+s.id+'\')" title="'+t('toggleHL')+'" style="color:var(--tx3)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button><button class="icon-btn" onclick="copyContent(\''+s.id+'\')" title="'+t('copy')+'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="icon-btn" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
   var meta=[];
   if(cat)meta.push('<div class="view-meta-item"><div class="dot" style="background:'+cat.color+'"></div>'+esc(cat.name)+'</div>');
@@ -119,7 +119,7 @@ function openViewScript(id){
   var bd='<div class="view-meta" style="margin-bottom:14px;flex-shrink:0">'+meta.join('')+'</div><div id="codeView" style="flex:1;min-height:0;overflow:auto;background:var(--bg1);border:1px solid var(--bdr);border-radius:10px;padding:16px;font-family:\'JetBrains Mono\',monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word"></div>';
   var ft='<button class="btn btn-danger btn-sm" onclick="deleteScript(\''+s.id+'\')">'+t('delete')+'</button><div style="flex:1"></div><button class="btn" onclick="closeModal()">'+t('cancel')+'</button><button class="btn btn-accent" onclick="closeModal();setTimeout(function(){openEditScript(\''+s.id+'\')},60)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'+t('edit')+'</button>';
   openModal(hd,bd,ft,true);
-  document.getElementById('codeView').textContent=s.content;
+  document.getElementById('codeView').innerHTML=renderHL(s.content);document.getElementById('hlToggle').style.color='var(--acc)';
 }
 function toggleHL(id){
   var el=document.getElementById('codeView');if(!el)return;
