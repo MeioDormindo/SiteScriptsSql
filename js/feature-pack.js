@@ -9,8 +9,13 @@
   var originalSave=window.saveScript;
   var originalView=window.openViewScript;
   var originalSettings=window.openSettings;
+  var originalSaveSettings=window.saveSettings;
+  var originalProcessImport=window.processImport;
 
   TR.es=Object.assign({},TR.pt,{allScripts:'Todos los scripts',folders:'Carpetas',categories:'Categorías',newScript:'Nuevo script',importDB:'Importar base',backupDB:'Copia',settings:'Configuración',search:'Buscar scripts...',noFolder:'Sin carpeta',save:'Guardar',cancel:'Cancelar',delete:'Eliminar',edit:'Editar',view:'Ver',copy:'Copiar',copied:'¡Copiado!',emptyState:'No se encontraron scripts',emptySub:'Crea un script o importa una base de datos',importTxt:'Importar .txt',settingsTitle:'Configuración',favorite:'Favorito',scriptSaved:'Script guardado',scriptDeleted:'Script eliminado',folderSaved:'Carpeta guardada',folderDeleted:'Carpeta eliminada',catSaved:'Categoría guardada',catDeleted:'Categoría eliminada',dark:'Oscuro',light:'Claro',scripts:'scripts',chars:'caracteres',lines:'líneas'});
+  var languageOptions=[['pt','Português'],['en','English'],['es','Español'],['fr','Français'],['de','Deutsch'],['it','Italiano'],['zh','中文'],['ja','日本語'],['ko','한국어'],['ru','Русский']];
+  var languageLabels={fr:{allScripts:'Tous les scripts',folders:'Dossiers',categories:'Catégories',newScript:'Nouveau script',settings:'Paramètres',search:'Rechercher des scripts...',save:'Enregistrer',cancel:'Annuler',delete:'Supprimer'},de:{allScripts:'Alle Skripte',folders:'Ordner',categories:'Kategorien',newScript:'Neues Skript',settings:'Einstellungen',search:'Skripte suchen...',save:'Speichern',cancel:'Abbrechen',delete:'Löschen'},it:{allScripts:'Tutti gli script',folders:'Cartelle',categories:'Categorie',newScript:'Nuovo script',settings:'Impostazioni',search:'Cerca script...',save:'Salva',cancel:'Annulla',delete:'Elimina'},zh:{allScripts:'所有脚本',folders:'文件夹',categories:'类别',newScript:'新建脚本',settings:'设置',search:'搜索脚本...',save:'保存',cancel:'取消',delete:'删除'},ja:{allScripts:'すべてのスクリプト',folders:'フォルダー',categories:'カテゴリ',newScript:'新しいスクリプト',settings:'設定',search:'スクリプトを検索...',save:'保存',cancel:'キャンセル',delete:'削除'},ko:{allScripts:'모든 스크립트',folders:'폴더',categories:'카테고리',newScript:'새 스크립트',settings:'설정',search:'스크립트 검색...',save:'저장',cancel:'취소',delete:'삭제'},ru:{allScripts:'Все скрипты',folders:'Папки',categories:'Категории',newScript:'Новый скрипт',settings:'Настройки',search:'Поиск скриптов...',save:'Сохранить',cancel:'Отмена',delete:'Удалить'}};
+  languageOptions.forEach(function(language){if(!TR[language[0]])TR[language[0]]=Object.assign({},TR.pt,languageLabels[language[0]]||{})});
 
   function savePref(){localStorage.setItem(prefKey,JSON.stringify(pref))}
   function script(id){return S.data.scripts.find(function(item){return item.id===id})}
@@ -121,10 +126,26 @@
     var foot=document.getElementById('mFoot');if(!foot||foot.querySelector('[data-reset]'))return;
     var button=document.createElement('button');button.className='btn btn-danger btn-sm';button.setAttribute('data-reset','true');button.textContent=featureText('Resetar aplicativo','Reset application');button.onclick=resetApplication;foot.insertBefore(button,foot.firstChild);
   }
+  function addLanguageSelect(){
+    var body=document.getElementById('mBody');if(!body||body.querySelector('#featureLanguage'))return;
+    var ptButton=Array.prototype.slice.call(body.querySelectorAll('button')).find(function(button){return button.textContent.trim()==='PT'});var group=ptButton&&ptButton.parentElement;if(!group)return;
+    var languageButtons=document.createElement('span');languageButtons.id='featureLanguage';languageButtons.style.cssText='display:inline-flex;gap:6px;flex-wrap:wrap';
+    languageOptions.filter(function(language){return language[0]!=='pt'&&language[0]!=='en'}).forEach(function(language){var button=document.createElement('button');button.className='btn btn-sm '+(S.lang===language[0]?'btn-accent':'');button.textContent=language[0].toUpperCase();button.title=language[1];button.onclick=function(){setLang(language[0]);openSettings()};languageButtons.appendChild(button)});
+    group.appendChild(languageButtons);
+  }
   window.openSettings=function(){
-    originalSettings();addResetButton();setTimeout(addResetButton,0);
+    originalSettings();addResetButton();addLanguageSelect();setTimeout(function(){addResetButton();addLanguageSelect()},0);
   };
-  window.toggleLang=function(){var languages=['pt','en','es'];var index=languages.indexOf(S.lang);setLang(languages[(index+1)%languages.length]);S.data.settings.language=S.lang;save();render()};
+  window.saveSettings=async function(){var language=document.getElementById('featureLanguage');if(language&&language.tagName==='SELECT'){setLang(language.value);S.data.settings.language=language.value}await originalSaveSettings()};
+  window.toggleLang=function(){var languages=languageOptions.map(function(language){return language[0]});var index=languages.indexOf(S.lang);setLang(languages[(index+1)%languages.length]);S.data.settings.language=S.lang;save();render()};
+  window.processImport=async function(txt,handle){
+    try{
+      var imported=JSON.parse(txt);if(Array.isArray(imported.scripts)){imported.scripts=imported.scripts.filter(function(item){return item&&typeof item.name==='string'&&typeof item.content==='string'}).map(function(item){return Object.assign({},item,{name:item.name.trim(),tags:Array.isArray(item.tags)?item.tags:[],versions:Array.isArray(item.versions)?item.versions:[],favorite:item.favorite===true,pinned:item.pinned===true})})}delete imported.settings;
+      await originalProcessImport(JSON.stringify(imported),handle);
+    }catch(error){await originalProcessImport(txt,handle)}
+  };
+  var settingsObserver=new MutationObserver(function(){if(document.getElementById('setUrl')){addResetButton();addLanguageSelect()}});
+  settingsObserver.observe(document.getElementById('modalOvl'),{childList:true,subtree:true});
   window.addEventListener('keydown',function(event){
     var editing=/input|textarea|select/i.test(event.target.tagName);if(event.ctrlKey||event.metaKey){if(event.key.toLowerCase()==='n'&&!editing){event.preventDefault();openNewScript()}if(event.key.toLowerCase()==='s'&&editing){event.preventDefault();var saveButton=document.querySelector('#mFoot .btn-accent');if(saveButton)saveButton.click()}}else if(event.key==='f'&&!editing){var item=S.data.scripts.find(function(s){return s.id===S.filter.activeScript});if(item)toggleFlag(item.id,'favorite')}
   });
