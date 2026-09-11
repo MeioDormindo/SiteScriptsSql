@@ -4,7 +4,7 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg0);color:var(--tx0);height:100vh;overflow:hidden;transition:background .3s,color .3s}
 #mainContent{display:flex;flex-direction:column;overflow:hidden!important;min-height:0}
 #mainContent>.script-size-control{display:none!important}
-#mainContent>div[style*="display:grid"]{display:grid!important;grid-template-columns:1fr!important;grid-auto-rows:min-content;gap:10px!important;flex:1;min-height:0;overflow:hidden}
+#mainContent>div[style*="display:grid"]{display:grid!important;grid-auto-rows:min-content;gap:10px!important;flex:1;min-height:0}
 #mainContent>.script-list{display:grid!important;grid-template-columns:1fr!important}
 .quick-filters{display:flex;align-items:center;gap:3px;flex-shrink:0}
 .quick-filters .is-active{color:var(--acc);background:var(--acc-bg);border-color:var(--acc)}
@@ -67,7 +67,7 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 .script-list .card{display:block!important;width:100%!important;min-width:0!important}
 .script-tool-spacer{flex:1}
 .script-pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;flex-wrap:wrap}
-.script-grid,.script-list,.script-table{flex:1;min-height:0;overflow:hidden;align-content:start}
+.script-grid,.script-list,.script-table{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;align-content:start}
 .script-pagination .btn{min-width:32px;justify-content:center;padding-left:8px;padding-right:8px}
 .script-pagination .is-current{background:var(--acc);border-color:var(--acc);color:#fff}
 .script-card-actions{display:flex;gap:2px;position:absolute;right:10px;top:10px;z-index:2}
