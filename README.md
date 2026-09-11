@@ -109,7 +109,8 @@ SQL Server 로컬 스크립트 관리자입니다. 최신 브라우저에서 `in
 index.html              HTML entry point
 css/style.css           Application styles
 js/app.js               Core application logic
+js/i18n.js              Translations for ES, FR, DE, IT, ZH, JA, KO, RU (PT/EN live in app.js)
 js/ui-preferences.js    Card size and ordering preferences
-js/feature-pack.js      Tags, views, pagination, reset, and language controls
+js/feature-pack.js      Tags, views, pagination, reset, password protection, and language controls
 Backup/sql_scripts.json Script database
 ```
