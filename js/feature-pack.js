@@ -12,6 +12,8 @@
   var originalOpenEdit=window.openEditScript;
   var originalSave=window.saveScript;
   var originalView=window.openViewScript;
+  var originalToggleHL=window.toggleHL;
+  var originalCloseModal=window.closeModal;
   var originalSettings=window.openSettings;
   var originalSaveSettings=window.saveSettings;
   var originalProcessImport=window.processImport;
@@ -27,6 +29,69 @@
   function normalize(value){return(value||'').toLowerCase().replace(/\s+/g,' ').trim()}
   function t(key){return(typeof window.t==='function'?window.t(key):key)}
   function featureText(pt,en){return S.lang==='en'?en:pt}
+  function hasCrypto(){return!!(window.crypto&&window.crypto.subtle)}
+  function bufToB64(buf){var bytes=new Uint8Array(buf);var bin='';for(var i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin)}
+  function b64ToBuf(b64){var bin=atob(b64);var bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return bytes.buffer}
+  function deriveKey(password,saltBuf){
+    return crypto.subtle.importKey('raw',new TextEncoder().encode(password),{name:'PBKDF2'},false,['deriveKey']).then(function(keyMaterial){
+      return crypto.subtle.deriveKey({name:'PBKDF2',salt:saltBuf,iterations:150000,hash:'SHA-256'},keyMaterial,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    });
+  }
+  function encryptText(password,text){
+    var salt=crypto.getRandomValues(new Uint8Array(16));var iv=crypto.getRandomValues(new Uint8Array(12));
+    return deriveKey(password,salt).then(function(key){return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(text))})
+      .then(function(cipher){return{salt:bufToB64(salt),iv:bufToB64(iv),data:bufToB64(cipher)}});
+  }
+  function decryptText(password,enc){
+    var salt=b64ToBuf(enc.salt),iv=new Uint8Array(b64ToBuf(enc.iv)),data=b64ToBuf(enc.data);
+    return deriveKey(password,salt).then(function(key){return crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,data)})
+      .then(function(plain){return new TextDecoder().decode(plain)});
+  }
+  function promptPassword(message,needConfirm){
+    return new Promise(function(resolve,reject){
+      var box=document.getElementById('confirmBox');
+      box.innerHTML='<div style="font-size:14px;line-height:1.5;margin-bottom:14px;color:var(--tx1)">'+message+'</div>'+
+        '<input type="password" class="inp" id="pwField" style="margin-bottom:'+(needConfirm?'8px':'14px')+'" autocomplete="new-password">'+
+        (needConfirm?'<input type="password" class="inp" id="pwField2" placeholder="'+featureText('Confirmar senha','Confirm password')+'" style="margin-bottom:14px">':'')+
+        '<div id="pwErr" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>'+
+        '<div style="display:flex;gap:8px;justify-content:center"><button class="btn" id="pwCancel">'+featureText('Cancelar','Cancel')+'</button><button class="btn btn-accent" id="pwOk">'+featureText('Confirmar','Confirm')+'</button></div>';
+      var ovl=document.getElementById('confirmOvl');ovl.classList.add('active');
+      var pw=document.getElementById('pwField');setTimeout(function(){pw.focus()},50);
+      function backdropCancel(event){if(event.target===ovl){cleanup();reject(new Error('cancelled'))}}
+      function cleanup(){ovl.classList.remove('active');ovl.removeEventListener('click',backdropCancel);box.innerHTML=''}
+      function fail(msg){var err=document.getElementById('pwErr');if(err){err.textContent=msg;err.style.display='block'}}
+      ovl.addEventListener('click',backdropCancel);
+      document.getElementById('pwCancel').onclick=function(){cleanup();reject(new Error('cancelled'))};
+      document.getElementById('pwOk').onclick=function(){
+        var value=pw.value;
+        if(!value){fail(featureText('Digite uma senha','Enter a password'));return}
+        if(needConfirm&&value!==document.getElementById('pwField2').value){fail(featureText('As senhas não coincidem','Passwords do not match'));return}
+        cleanup();resolve(value);
+      };
+      pw.addEventListener('keydown',function(event){if(event.key==='Enter')document.getElementById('pwOk').click()});
+    });
+  }
+  function addLockControl(item,currentPassword){
+    var body=document.getElementById('mBody');if(!body||body.querySelector('#featureLockBox'))return;
+    var wasLocked=!!(item&&item.locked);
+    var box=document.createElement('div');box.id='featureLockBox';box.dataset.wasLocked=wasLocked?'1':'0';
+    box.style.cssText='margin-bottom:12px;padding:10px;border:1px solid var(--bdr);border-radius:8px;background:var(--bg1)';
+    if(wasLocked){
+      box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px"><span style="font-size:12px;font-weight:600;color:var(--acc)">🔒 '+featureText('Protegido por senha','Password protected')+'</span><button type="button" class="btn btn-sm btn-danger" id="featureUnlock">'+featureText('Remover proteção','Remove protection')+'</button></div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><input type="password" class="inp" id="featurePass" placeholder="'+featureText('Nova senha (opcional)','New password (optional)')+'" style="flex:1;min-width:140px"><input type="password" class="inp" id="featurePass2" placeholder="'+featureText('Confirmar nova senha','Confirm new password')+'" style="flex:1;min-width:140px"></div>';
+    }else{
+      box.innerHTML='<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:6px"><input type="checkbox" id="featureLock" style="width:auto"> 🔒 '+featureText('Proteger com senha','Protect with password')+'</label>'+
+        '<div id="featureLockFields" style="display:none;gap:8px;flex-wrap:wrap"><input type="password" class="inp" id="featurePass" placeholder="'+featureText('Senha','Password')+'" style="flex:1;min-width:140px"><input type="password" class="inp" id="featurePass2" placeholder="'+featureText('Confirmar senha','Confirm password')+'" style="flex:1;min-width:140px"></div>';
+    }
+    body.insertBefore(box,body.firstChild);
+    var chk=box.querySelector('#featureLock');if(chk)chk.addEventListener('change',function(){box.querySelector('#featureLockFields').style.display=this.checked?'flex':'none'});
+    var unlockBtn=box.querySelector('#featureUnlock');if(unlockBtn)unlockBtn.addEventListener('click',function(){box.dataset.removeLock='1';box.style.opacity='.5';unlockBtn.disabled=true;unlockBtn.textContent=featureText('Será removida ao salvar','Will be removed on save')});
+    if(currentPassword)box._currentPassword=currentPassword;
+  }
+  function addHistoryButton(id){
+    var foot=document.getElementById('mFoot');if(!foot||foot.querySelector('[data-history]'))return;
+    var button=document.createElement('button');button.className='btn btn-sm';button.setAttribute('data-history','true');button.textContent=featureText('Histórico','History');button.onclick=function(){showScriptHistory(id)};foot.insertBefore(button,foot.firstChild);
+  }
   function calculatePageSize(){
     var main=document.getElementById('mainContent');
     var available=window.innerHeight-52-40-58-42;
@@ -56,7 +121,7 @@
     return result;
   }
   window.getFiltered=function(){
-    pref.pageSize=calculatePageSize();
+    if(!window._fittingPage)pref.pageSize=calculatePageSize();
     var filter=getAdvancedFilter();
     if(S.filter.quickFavorite)filter.favorite=true;if(S.filter.quickPinned)filter.pinned=true;
     var rawSearch=S.filter.search;S.filter.search=filter.text.join(' ');var list=originalFilter();S.filter.search=rawSearch;
@@ -99,27 +164,67 @@
     grid.querySelectorAll('.card').forEach(function(card){
       var match=(card.getAttribute('onclick')||'').match(/openViewScript\('([^']+)'\)/);if(!match)return;
       var item=script(match[1]);if(!item)return;
+      if(pref.view==='table'){
+        var contentDivs=Array.prototype.filter.call(card.children,function(el){return el.tagName==='DIV'&&!el.classList.contains('card-bar')});
+        if(contentDivs.length===3)card.insertBefore(document.createElement('div'),contentDivs[1]);
+      }
       var actions=document.createElement('div');actions.className='script-card-actions';
       actions.innerHTML='<button class="icon-btn '+(item.favorite?'is-active':'')+'" title="'+featureText('Favorito','Favorite')+'">★</button><button class="icon-btn '+(item.pinned?'is-active':'')+'" title="'+featureText('Fixar no topo','Pin to top')+'">⌃</button>';
       actions.children[0].addEventListener('click',function(event){event.stopPropagation();toggleFlag(item.id,'favorite')});
       actions.children[1].addEventListener('click',function(event){event.stopPropagation();toggleFlag(item.id,'pinned')});
       card.appendChild(actions);
-      var preview=card.querySelector('div[style*="JetBrains Mono"]');if(preview&&!preview.querySelector('i')){preview.classList.add('script-preview');preview.innerHTML=renderHL(preview.textContent)}
+      var preview=card.querySelector('div[style*="JetBrains Mono"]');
+      if(item.locked){
+        if(preview){preview.classList.add('script-preview');preview.innerHTML='<span style="color:var(--tx3)">🔒 '+featureText('Protegido por senha','Password protected')+'</span>'}
+        var nameEl=card.querySelector('div[title]');if(nameEl)nameEl.insertAdjacentHTML('afterbegin','🔒 ');
+      }else if(preview&&!preview.querySelector('i')){preview.classList.add('script-preview');preview.innerHTML=renderHL(preview.textContent)}
       var tagLine=document.createElement('div');tagLine.className='script-tags';tagLine.textContent=tagsOf(item).map(function(tag){return'#'+tag}).join(' ');if(tagLine.textContent)card.appendChild(tagLine);
     });
+  }
+  var fitAttempts=0;
+  function fitPageToViewport(main,grid){
+    var cards=grid.querySelectorAll('.card');if(!cards.length){fitAttempts=0;return}
+    var first=cards[0];var cardH=first.offsetHeight;if(!cardH){fitAttempts=0;return}
+    var styles=getComputedStyle(grid);var rowGap=parseFloat(styles.rowGap)||10;
+    var columns=1;
+    if(pref.view==='cards'){
+      var firstTop=first.offsetTop;columns=0;
+      for(var i=0;i<cards.length;i++){if(cards[i].offsetTop===firstTop)columns++;else break}
+      columns=Math.max(1,columns);
+    }
+    var rows=Math.max(1,Math.floor((grid.clientHeight+rowGap)/(cardH+rowGap)));
+    var ideal=Math.max(1,Math.min(80,columns*rows));
+    if(ideal!==pref.pageSize&&fitAttempts<3){
+      pref.pageSize=ideal;fitAttempts++;
+      window._fittingPage=true;render();window._fittingPage=false;
+    }else{fitAttempts=0}
   }
   window.renderMain=function(){
     originalRender();normalizeRecords();var main=document.getElementById('mainContent');var grid=main&&(main.querySelector('.script-grid')||main.firstElementChild);
     if(!grid||grid.classList.contains('empty-state')){updateQuickFilters();return}
     addFeatureTools(main,grid);enhanceCards(grid);
     updatePagination(main,grid);updateQuickFilters();
+    fitPageToViewport(main,grid);
   };
   function addTagInput(item){
     var body=document.getElementById('mBody');if(!body||body.querySelector('#featureTags'))return;
     var field=document.createElement('div');field.style.cssText='margin-bottom:12px';field.innerHTML='<label class="label">'+featureText('Tags','Tags')+'</label><input class="inp" id="featureTags" placeholder="produção, manutenção, relatório" value="'+tagsOf(item).join(', ')+'">';body.insertBefore(field,body.firstChild);
   }
-  window.openNewScript=function(){originalOpenNew();addTagInput({tags:[]})};
-  window.openEditScript=function(id){originalOpenEdit(id);addTagInput(script(id)||{tags:[]})};
+  window.openNewScript=function(){originalOpenNew();addTagInput({tags:[]});addLockControl(null)};
+  window.openEditScript=function(id){
+    var item=script(id);
+    if(item&&item.locked){
+      if(!hasCrypto()){showToast(featureText('Este navegador não suporta criptografia (Web Crypto). Use Chrome ou Edge atualizados.','This browser does not support encryption (Web Crypto). Use an up-to-date Chrome or Edge.'),'error');return}
+      promptPassword(featureText('Digite a senha para editar "'+esc(item.name)+'":','Enter the password to edit "'+esc(item.name)+'":'),false).then(function(password){
+        return decryptText(password,item.secure).then(function(plain){
+          originalOpenEdit(id);document.getElementById('sCont').value=plain;updateInfo();
+          addTagInput(item);addLockControl(item,password);
+        });
+      }).catch(function(err){if(err&&err.message!=='cancelled')showToast(featureText('Senha incorreta','Incorrect password'),'error')});
+      return;
+    }
+    originalOpenEdit(id);addTagInput(item||{tags:[]});addLockControl(item);
+  };
   window.saveScript=async function(id){
     var field=document.getElementById('featureTags');var tags=field?field.value.split(',').map(function(tag){return tag.trim().toLowerCase()}).filter(Boolean).filter(function(tag,index,list){return list.indexOf(tag)===index}):null;
     var item=id&&script(id);var previous=item&&item.content;var nextContent=document.getElementById('sCont')&&document.getElementById('sCont').value;
@@ -128,8 +233,42 @@
       var duplicate=S.data.scripts.find(function(other){return other.id!==item.id&&normalize(other.content)===normalize(nextContent)});
       if(duplicate&&!confirm(featureText('Este conteúdo já existe em "'+duplicate.name+'". Deseja salvar mesmo assim?','This content already exists in "'+duplicate.name+'". Save anyway?')))return;
     }
-    await originalSave(id);var created=id?script(id):S.data.scripts.slice().sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt)})[0];
-    if(created){if(tags)created.tags=tags;if(previous!==undefined&&previous!==created.content){created.versions=Array.isArray(created.versions)?created.versions:[];created.versions.push({content:previous,savedAt:now()});created.versions=created.versions.slice(-20)}await save()}
+    var lockBox=document.getElementById('featureLockBox');var pendingLock=null;
+    if(lockBox){
+      var wasLocked=lockBox.dataset.wasLocked==='1';var removeLock=lockBox.dataset.removeLock==='1';
+      if(wasLocked&&removeLock)pendingLock={remove:true};
+      else if(wasLocked&&!removeLock){
+        var newPass=(document.getElementById('featurePass')||{}).value||'';
+        if(newPass){
+          if(newPass!==((document.getElementById('featurePass2')||{}).value||'')){showToast(featureText('As senhas não coincidem','Passwords do not match'),'error');return}
+          pendingLock={password:newPass};
+        }else if(lockBox._currentPassword)pendingLock={password:lockBox._currentPassword,keep:true};
+      }else if(!wasLocked){
+        var chk=document.getElementById('featureLock');
+        if(chk&&chk.checked){
+          var p1=(document.getElementById('featurePass')||{}).value||'';var p2=(document.getElementById('featurePass2')||{}).value||'';
+          if(!p1){showToast(featureText('Digite uma senha para proteger o script','Enter a password to protect the script'),'error');return}
+          if(p1!==p2){showToast(featureText('As senhas não coincidem','Passwords do not match'),'error');return}
+          pendingLock={password:p1,firstLock:true};
+        }
+      }
+    }
+    if(pendingLock&&pendingLock.password&&!hasCrypto()){showToast(featureText('Este navegador não suporta criptografia (Web Crypto)','This browser does not support encryption (Web Crypto)'),'error');return}
+    var encBlob=null,contentField=document.getElementById('sCont'),realValue=contentField?contentField.value:undefined;
+    if(pendingLock&&pendingLock.password){
+      try{encBlob=await encryptText(pendingLock.password,nextContent||'')}catch(e){showToast(featureText('Falha ao criptografar o conteúdo','Failed to encrypt content'),'error');return}
+      if(contentField)contentField.value='';
+    }
+    await originalSave(id);
+    if(contentField&&encBlob!==null)contentField.value=realValue;
+    var created=id?script(id):S.data.scripts.slice().sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt)})[0];
+    if(created){
+      if(tags)created.tags=tags;
+      if(pendingLock&&pendingLock.remove){created.locked=false;delete created.secure}
+      else if(encBlob){created.locked=true;created.secure=encBlob;if(pendingLock.firstLock)created.versions=[]}
+      if(!created.locked&&!(pendingLock&&pendingLock.remove)&&previous!==undefined&&previous!==created.content){created.versions=Array.isArray(created.versions)?created.versions:[];created.versions.push({content:previous,savedAt:now()});created.versions=created.versions.slice(-20)}
+      await save();
+    }
   };
   function restoreVersion(id,index){
     var item=script(id);if(!item||!item.versions[index])return;
@@ -141,9 +280,46 @@
     openModal('<span style="font-weight:700;font-size:15px">'+featureText('Histórico de versões','Version history')+'</span><button class="icon-btn" onclick="closeModal()">×</button>',rows||'<div class="empty-state">'+featureText('Nenhuma versão anterior','No previous version')+'</div>','<div style="flex:1"></div><button class="btn" onclick="closeModal()">'+t('cancel')+'</button>',false);
   };
   window.restoreScriptVersion=restoreVersion;
+  var unlockedId=null,unlockedText=null;
   window.openViewScript=function(id){
-    originalView(id);var foot=document.getElementById('mFoot');if(!foot||foot.querySelector('[data-history]'))return;
-    var button=document.createElement('button');button.className='btn btn-sm';button.setAttribute('data-history','true');button.textContent=featureText('Histórico','History');button.onclick=function(){showScriptHistory(id)};foot.insertBefore(button,foot.firstChild);
+    var item=script(id);
+    unlockedId=null;unlockedText=null;
+    originalView(id);addHistoryButton(id);
+    if(!item||!item.locked)return;
+    var codeView=document.getElementById('codeView');if(!codeView)return;
+    codeView.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--tx2)"><div style="font-size:32px">🔒</div><div>'+featureText('Conteúdo protegido por senha','Password protected content')+'</div><button class="btn btn-sm btn-accent" id="featureUnlockView">'+featureText('Desbloquear','Unlock')+'</button></div>';
+    var hl=document.getElementById('hlToggle');if(hl)hl.style.display='none';
+    document.getElementById('featureUnlockView').onclick=function(){
+      if(!hasCrypto()){showToast(featureText('Este navegador não suporta criptografia (Web Crypto)','This browser does not support encryption (Web Crypto)'),'error');return}
+      promptPassword(featureText('Digite a senha para visualizar:','Enter the password to view:'),false).then(function(password){
+        return decryptText(password,item.secure).then(function(plain){unlockedId=id;unlockedText=plain;codeView.innerHTML=renderHL(plain);if(hl)hl.style.display=''});
+      }).catch(function(err){if(err&&err.message!=='cancelled')showToast(featureText('Senha incorreta','Incorrect password'),'error')});
+    };
+  };
+  window.toggleHL=function(id){
+    if(id===unlockedId&&unlockedText!==null){
+      var el=document.getElementById('codeView');if(!el)return;
+      _viewHL=!_viewHL;var btn=document.getElementById('hlToggle');
+      if(_viewHL){el.innerHTML=renderHL(unlockedText);if(btn)btn.style.color='var(--acc)'}
+      else{el.textContent=unlockedText;if(btn)btn.style.color='var(--tx3)'}
+      return;
+    }
+    originalToggleHL(id);
+  };
+  window.closeModal=function(){unlockedId=null;unlockedText=null;originalCloseModal()};
+  var originalCopy=window.copyContent;
+  window.copyContent=function(id){
+    var item=script(id);
+    if(item&&item.locked){
+      if(!hasCrypto()){showToast(featureText('Este navegador não suporta criptografia (Web Crypto)','This browser does not support encryption (Web Crypto)'),'error');return}
+      promptPassword(featureText('Digite a senha para copiar:','Enter the password to copy:'),false).then(function(password){
+        return decryptText(password,item.secure).then(function(plain){
+          navigator.clipboard.writeText(plain).then(function(){showToast(t('copied'),'success')}).catch(function(){showToast(featureText('Falha ao copiar','Copy failed'),'error')});
+        });
+      }).catch(function(err){if(err&&err.message!=='cancelled')showToast(featureText('Senha incorreta','Incorrect password'),'error')});
+      return;
+    }
+    originalCopy(id);
   };
   window.resetApplication=function(){
     showConfirm(featureText('Isso apagará todos os scripts, pastas, categorias personalizadas, favoritos e preferências. O arquivo JSON de backup não será apagado. Continuar?','This will delete all scripts, folders, custom categories, favorites and preferences. The backup JSON file will not be deleted. Continue?'),async function(){

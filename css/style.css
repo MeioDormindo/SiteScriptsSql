@@ -73,14 +73,17 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 .script-card-actions{display:flex;gap:2px;position:absolute;right:10px;top:10px;z-index:2}
 .script-card-actions .icon-btn{background:var(--bg2);border:1px solid var(--bdr)}
 .script-card-actions .is-active{color:var(--acc);background:var(--acc-bg)}
+.script-grid .card>div:nth-of-type(2),.script-list .card>div:nth-of-type(2){padding-right:68px}
 .script-list{grid-template-columns:1fr!important}
 .script-list .card{display:block;width:100%;border-radius:6px;padding:14px 16px}
 .script-list .card>div:nth-child(2){margin-bottom:8px!important}
 .script-list .script-preview{margin-bottom:8px!important;min-height:32px}
 .script-list .card{padding:12px 16px}
 .script-table{grid-template-columns:1fr!important}
-.script-table .card{display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(100px,.6fr) minmax(220px,2fr) minmax(120px,.7fr);align-items:center;gap:14px;padding:12px 16px}
+.script-table .card{display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(100px,.6fr) minmax(220px,2fr) minmax(120px,.7fr) minmax(56px,auto);align-items:center;gap:14px;padding:12px 16px}
 .script-table .card>div:nth-child(2){margin:0!important}
 .script-table .script-preview{margin:0!important;min-height:0}
-@media(max-width:768px){.script-list .card,.script-table .card{display:block}.script-list .script-preview,.script-table .script-preview{margin-top:8px!important}.script-tools{align-items:stretch}.script-tools .inp{flex:1}}
+.script-table .script-tags{display:none}
+.script-table .script-card-actions{position:static;right:auto;top:auto;justify-content:flex-end}
+@media(max-width:768px){.script-list .card,.script-table .card{display:block}.script-list .script-preview,.script-table .script-preview{margin-top:8px!important}.script-tools{align-items:stretch}.script-tools .inp{flex:1}.script-table .script-card-actions{margin-top:8px}}
 @media(max-width:768px){#sidebar{position:fixed;left:-280px;z-index:50;transition:left .3s;height:calc(100vh - 52px);background:var(--bg1)}#sidebar.open{left:0}.mob-ovl{position:fixed;inset:0;background:var(--ovl);z-index:49;display:none}.mob-ovl.active{display:block}.hide-m{display:none!important}}
