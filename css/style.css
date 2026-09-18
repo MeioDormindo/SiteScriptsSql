@@ -86,4 +86,15 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 .script-table .script-tags{display:none}
 .script-table .script-card-actions{position:static;right:auto;top:auto;justify-content:flex-end}
 @media(max-width:768px){.script-list .card,.script-table .card{display:block}.script-list .script-preview,.script-table .script-preview{margin-top:8px!important}.script-tools{align-items:stretch}.script-tools .inp{flex:1}.script-table .script-card-actions{margin-top:8px}}
-@media(max-width:768px){#sidebar{position:fixed;left:-280px;z-index:50;transition:left .3s;height:calc(100vh - 52px);background:var(--bg1)}#sidebar.open{left:0}.mob-ovl{position:fixed;inset:0;background:var(--ovl);z-index:49;display:none}.mob-ovl.active{display:block}.hide-m{display:none!important}}
+@media(max-width:768px){#sidebar{position:fixed;left:-280px;z-index:50;transition:left .3s;height:calc(100vh - 52px);background:var(--bg1)}#sidebar.open{left:0}.mob-ovl{position:fixed;inset:0;background:var(--ovl);z-index:49;display:none}.mob-ovl.active{display:block}.hide-m{display:none!important}}.donate-box{margin:18px 6px 0;padding:12px;border:1px solid var(--bdr);border-radius:12px;background:var(--bg2);display:flex;flex-direction:column;gap:10px}
+.donate-title{font-size:13px;font-weight:700;color:var(--tx0)}
+.donate-text{font-size:12px;line-height:1.5;color:var(--tx1)}
+.donate-qr{align-self:center;background:#fff;border-radius:10px;padding:6px;line-height:0;box-shadow:var(--shd)}
+.donate-qr img{display:block;width:100%;max-width:200px;height:auto}
+.donate-code{display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px}
+.donate-code textarea{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--bdr);background:var(--bg1);color:var(--tx1);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:400;line-height:1.5;letter-spacing:0;text-transform:none;resize:none;word-break:break-all;outline:none}
+.donate-code textarea:focus{border-color:var(--acc)}
+.donate-btn{justify-content:center;min-height:34px}
+.site-stats{margin:10px 6px 4px;padding:0 6px;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--tx2)}
+.site-stats div{display:flex;justify-content:space-between;gap:8px}
+.site-stats b{font-weight:600;color:var(--tx1);font-variant-numeric:tabular-nums}

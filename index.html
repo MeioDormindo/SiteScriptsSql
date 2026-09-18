@@ -36,7 +36,20 @@
   </header>
   <div style="display:flex;flex:1;overflow:hidden">
     <div class="mob-ovl" id="mobOvl" onclick="toggleSidebar()"></div>
-    <aside id="sidebar" style="width:256px;border-right:1px solid var(--bdr);background:var(--bg1);overflow-y:auto;flex-shrink:0;padding:10px 6px"><div id="sidebarContent"></div></aside>
+    <aside id="sidebar" style="width:256px;border-right:1px solid var(--bdr);background:var(--bg1);overflow-y:auto;flex-shrink:0;padding:10px 6px"><div id="sidebarContent"></div>
+      <section class="donate-box">
+        <div class="donate-title" data-t="donateTitle"></div>
+        <p class="donate-text" data-t="donateText"></p>
+        <!-- Sempre escuro sobre branco e com ~200px: sao 53 modulos, menor que isso a camera do celular custa a ler. -->
+        <div class="donate-qr"><img src="img/pix-qr.svg" width="212" height="212" alt="QR Code Pix"></div>
+        <label class="donate-code"><span><span data-t="pixCode"></span> · <span id="pixName"></span></span><textarea id="pixPayload" rows="3" readonly onfocus="this.select()"></textarea></label>
+        <button type="button" class="btn btn-sm btn-accent donate-btn" onclick="copyPixCode()" data-t="pixCopy"></button>
+      </section>
+      <div class="site-stats">
+        <div><span data-t="visitsLabel"></span><b id="visitCount">—</b></div>
+        <div><span data-t="lastUpdateLabel"></span><b id="lastUpdate">—</b></div>
+      </div>
+    </aside>
     <main id="mainContent" style="flex:1;overflow-y:auto;padding:20px;background:var(--bg0)"></main>
   </div>
 </div>
@@ -51,5 +64,6 @@
 <script src="js/i18n.js"></script>
 <script src="js/ui-preferences.js"></script>
 <script src="js/feature-pack.js"></script>
+<script src="js/donate.js"></script>
 </body>
 </html>
