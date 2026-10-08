@@ -1,0 +1,256 @@
+/* Layout "Novo (beta)", estilo IDE. Toda regra comeca com html[data-layout="ide"]: no layout Classico este arquivo nao faz nada.
+   As cores redefinem as variaveis do style.css, entao os estilos inline que usam var(--...) mudam sozinhos.
+   Contraste medido (WCAG 2.2 AA): textos >= 4,5:1 e bordas de controles/foco >= 3:1 em todas as superficies onde aparecem. */
+html[data-layout="ide"]{--ide-header-h:44px;--ide-status-h:32px;--ide-act-w:48px;--ide-side-w:264px;--ide-preview-w:clamp(380px,36vw,760px);--ide-row-h:56px;--focus-ring:var(--ide-focus)}
+html[data-layout="ide"][data-theme="dark"]{--bg0:#1f2228;--bg1:#1b1e23;--bg2:#23262c;--bg3:#2a2f37;--bg4:#323741;--bdr:#323741;--bdr2:#3d4350;--tx0:#e6e8eb;--tx1:#b8bfc9;--tx2:#a7afba;--tx3:#98a1ad;--acc:#3fc9d8;--acc2:#6ad6e2;--acc-bg:rgba(63,201,216,.12);--on-acc:#06181c;--red:#ff7b80;--red-bg:rgba(255,123,128,.1);--on-red:#1a0a0b;--grn:#4fd18b;--warn:#e8b55a;--shd:0 2px 10px rgba(0,0,0,.35);--shd2:0 12px 40px rgba(0,0,0,.55);--ovl:rgba(0,0,0,.55);--sb:#3d4350;--sb2:#4b5260;--ide-act:#15171b;--ide-sel:#123a42;--ide-code:#16191d;--ide-focus:#5ee0ef;--ide-ctl-bdr:#6c7685;color-scheme:dark}
+html[data-layout="ide"][data-theme="light"]{--bg0:#ffffff;--bg1:#f3f5f7;--bg2:#ffffff;--bg3:#eaeef2;--bg4:#dfe4ea;--bdr:#d6dbe1;--bdr2:#c3cad3;--tx0:#1a1e24;--tx1:#3f4752;--tx2:#56606c;--tx3:#5f6975;--acc:#006b79;--acc2:#005a66;--acc-bg:rgba(0,107,121,.08);--on-acc:#ffffff;--red:#c4242f;--red-bg:rgba(196,36,47,.07);--on-red:#ffffff;--grn:#17703d;--warn:#8a5a00;--shd:0 2px 10px rgba(16,24,40,.08);--shd2:0 12px 40px rgba(16,24,40,.16);--ovl:rgba(16,24,40,.32);--sb:#c3cad3;--sb2:#a9b2bd;--ide-act:#e8ebef;--ide-sel:#d9f1f4;--ide-code:#f6f8fa;--ide-focus:#007a8a;--ide-ctl-bdr:#7b8592;color-scheme:light}
+html[data-layout="ide"] body{font-size:13px;line-height:1.45;background:var(--bg0)}
+html[data-layout="ide"] ::-webkit-scrollbar{width:10px;height:10px}
+html[data-layout="ide"] ::-webkit-scrollbar-thumb{background:var(--sb);border-radius:5px;border:2px solid transparent;background-clip:padding-box}
+html[data-layout="ide"] ::-webkit-scrollbar-thumb:hover{background:var(--sb2);background-clip:padding-box}
+
+/* ===== Estrutura: cabecalho / barra de atividades + corpo / barra de status ===== */
+html[data-layout="ide"] #app{display:grid!important;height:100vh!important;height:100dvh!important;grid-template-columns:var(--ide-act-w) minmax(0,1fr);grid-template-rows:var(--ide-header-h) minmax(0,1fr) var(--ide-status-h);grid-template-areas:"header header" "act body" "status status"}
+html[data-layout="ide"] #appHeader{grid-area:header;height:auto!important;min-width:0;padding:0 8px 0 12px!important;gap:6px!important;background:var(--ide-act)!important;border-bottom:1px solid var(--bdr)!important}
+html[data-layout="ide"] #ideActivity{grid-area:act}
+html[data-layout="ide"] #appBody{grid-area:body;min-height:0;min-width:0}
+html[data-layout="ide"] #ideStatus{grid-area:status}
+
+/* ===== Cabecalho ===== */
+html[data-layout="ide"] #appHeader>div:first-of-type{margin-right:8px!important}
+html[data-layout="ide"] #appHeader>div:first-of-type span{font-size:13px!important;font-weight:600!important;letter-spacing:0!important}
+html[data-layout="ide"] #searchWrap{max-width:560px!important;margin:0 4px 0 12px!important}
+html[data-layout="ide"] #searchInput{height:30px!important;border-radius:6px!important;padding-right:36px!important;background:var(--bg1);border-color:var(--ide-ctl-bdr)}
+html[data-layout="ide"] .ide-search-kbd{position:absolute;right:6px;top:50%;transform:translateY(-50%);pointer-events:none}
+html[data-layout="ide"] .ide-kbd{display:inline-block;font:500 11px/1 'JetBrains Mono',monospace;padding:3px 6px;border:1px solid var(--bdr2);border-bottom-width:2px;border-radius:4px;color:var(--tx2);background:var(--bg2);white-space:nowrap}
+html[data-layout="ide"] #ideCmdBtn{height:30px;gap:8px;color:var(--tx1);flex-shrink:0}
+html[data-layout="ide"] #ideCmdBtn:hover{color:var(--tx0)}
+html[data-layout="ide"] #appHeader>div:last-of-type{gap:2px!important}
+html[data-layout="ide"] #appHeader>div:last-of-type>div[style*="width:1px"]{height:20px!important;margin:0 6px!important}
+html[data-layout="ide"] #newScriptBtn{height:30px;padding:0 12px;background:var(--acc);border-color:var(--acc);color:var(--on-acc);font-weight:600}
+html[data-layout="ide"] #newScriptBtn:hover{background:var(--acc2);border-color:var(--acc2)}
+html[data-layout="ide"] :is(#importTxtBtn,#importDbBtn,#backupBtn) .hide-m{display:none!important}
+html[data-layout="ide"] :is(#importTxtBtn,#importDbBtn,#backupBtn,#syncBtn,#themeBtn,#settingsBtn,#accountBtn){min-width:32px!important;height:32px;padding:0 8px!important;justify-content:center;background:transparent;border-color:transparent;color:var(--tx1)}
+html[data-layout="ide"] :is(#importTxtBtn,#importDbBtn,#backupBtn,#syncBtn,#themeBtn,#settingsBtn,#accountBtn):hover{background:var(--bg3);color:var(--tx0)}
+html[data-layout="ide"] :is(#importTxtBtn,#importDbBtn,#backupBtn,#syncBtn,#themeBtn,#settingsBtn) svg{width:16px;height:16px}
+html[data-layout="ide"] #accountBtn .sync-dot{border-color:var(--ide-act)}
+@media(min-width:769px){html[data-layout="ide"] .quick-filters{display:none!important}}
+
+/* ===== Barra de atividades ===== */
+html[data-layout="ide"] #ideActivity{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;background:var(--ide-act);border-right:1px solid var(--bdr);overflow:hidden auto;min-height:0}
+html[data-layout="ide"] .ide-act{position:relative;flex:0 0 40px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:0;border-radius:6px;background:transparent;color:var(--tx2);cursor:pointer;font-size:16px;line-height:1}
+html[data-layout="ide"] .ide-act:hover{color:var(--tx0);background:var(--bg3)}
+html[data-layout="ide"] .ide-act[aria-pressed="true"],html[data-layout="ide"] .ide-act[aria-expanded="true"]{color:var(--acc)}
+html[data-layout="ide"] .ide-act[aria-pressed="true"]::before,html[data-layout="ide"] .ide-act[aria-expanded="true"]::before{content:'';position:absolute;left:-4px;top:9px;bottom:9px;width:2px;border-radius:2px;background:var(--acc)}
+html[data-layout="ide"] .ide-act:focus-visible{outline-offset:-2px}
+html[data-layout="ide"] .ide-act-badge{position:absolute;right:2px;bottom:3px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--bg4);color:var(--tx0);font:600 10px/16px 'JetBrains Mono',monospace;text-align:center}
+html[data-layout="ide"] .ide-act-badge:empty{display:none}
+html[data-layout="ide"] .ide-act-sep{flex:1 1 auto;min-height:8px}
+
+/* ===== Explorador (barra lateral) ===== */
+html[data-layout="ide"] #sidebar{width:var(--ide-side-w)!important;padding:6px 0 12px!important;background:var(--bg1)!important;border-right:1px solid var(--bdr)!important}
+@media(min-width:769px){html[data-layout="ide"][data-ide-explorer="off"] #sidebar{display:none}}
+html[data-layout="ide"] .sidebar-item{position:relative;height:30px;padding:0 6px 0 12px;margin:0 6px;border-radius:4px;gap:8px;font-size:13px;font-weight:400;color:var(--tx1)}
+html[data-layout="ide"] .sidebar-item:hover{background:var(--bg3);color:var(--tx0)}
+html[data-layout="ide"] .sidebar-item.active{background:var(--ide-sel);color:var(--tx0);box-shadow:inset 2px 0 0 var(--acc)}
+html[data-layout="ide"] .sidebar-item .cnt{font:11px 'JetBrains Mono',monospace;color:var(--tx2)}
+html[data-layout="ide"] .sidebar-item span[style*="opacity:.6"]{opacity:1!important;color:var(--tx2)}
+html[data-layout="ide"] .sidebar-item>.dot{width:8px;height:8px}
+html[data-layout="ide"] .sidebar-section{margin:14px 0 4px;padding:0 10px 0 18px;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--tx2)}
+html[data-layout="ide"] .sidebar-section .icon-btn{width:24px;height:24px}
+html[data-layout="ide"] #sidebarContent>div[style*="font-style:italic"],html[data-layout="ide"] .sub-empty{color:var(--tx2)}
+html[data-layout="ide"] .ide-more{flex:0 0 24px;width:24px;height:22px;margin-right:-2px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:4px;background:transparent;color:var(--tx2);font-size:15px;line-height:1;cursor:pointer;opacity:0}
+html[data-layout="ide"] .sidebar-item:hover .ide-more,html[data-layout="ide"] .sidebar-item:focus .ide-more,html[data-layout="ide"] .sidebar-item.active .ide-more{opacity:1}
+html[data-layout="ide"] .ide-more:hover{background:var(--bg4);color:var(--tx0)}
+html[data-layout="ide"] .donate-box{margin:18px 10px 0;border-radius:8px;background:var(--bg2)}
+html[data-layout="ide"] .site-stats{margin:10px 10px 4px}
+
+/* ===== Lista de scripts ===== */
+html[data-layout="ide"] #mainContent{padding:0!important;background:var(--bg0)!important}
+html[data-layout="ide"] #mainContent>.script-tools{flex:0 0 40px;height:40px;margin:0!important;padding:0 12px 0 16px;flex-wrap:nowrap;gap:8px;overflow:hidden;border-bottom:1px solid var(--bdr);background:var(--bg0)}
+html[data-layout="ide"] .script-tools label{font-size:12px;color:var(--tx2);white-space:nowrap}
+html[data-layout="ide"] .script-tools .inp{height:28px;padding-top:0;padding-bottom:0;font-size:12px;min-width:120px;background-color:var(--bg1)}
+html[data-layout="ide"] .script-tools .shared-banner{height:28px;padding:0 8px;flex-wrap:nowrap;border-radius:6px}
+html[data-layout="ide"] .script-tools .shared-banner .btn-sm{padding:2px 8px}
+html[data-layout="ide"] #mainContent>.shared-banner{margin:12px 16px 0}
+html[data-layout="ide"] #mainContent>.script-list,html[data-layout="ide"] #mainContent>.script-table{gap:1px!important;padding:0 0 1px}
+html[data-layout="ide"] #mainContent>.script-grid{gap:8px!important;padding:12px 16px}
+html[data-layout="ide"] #mainContent .card{border:0;border-radius:0;background:var(--bg0);box-shadow:0 1px 0 var(--bdr);transition:background .12s}
+html[data-layout="ide"] #mainContent .card:hover{transform:none;background:var(--bg3);box-shadow:0 1px 0 var(--bdr)}
+html[data-layout="ide"] #mainContent .card[aria-current="true"]{background:var(--ide-sel);box-shadow:inset 2px 0 0 var(--acc),0 1px 0 var(--bdr)}
+html[data-layout="ide"] #mainContent .card-bar{top:12px;bottom:12px;left:8px;right:auto;width:3px;height:auto;opacity:1;border-radius:2px}
+html[data-layout="ide"] #mainContent .card div[title]{font-size:13px!important;font-weight:600!important;line-height:20px!important}
+html[data-layout="ide"] #mainContent .card .badge{font:500 10.5px/16px 'JetBrains Mono',monospace;color:var(--tx1)!important;background:transparent!important;border:1px solid var(--bdr2)!important;border-radius:4px;padding:0 6px}
+html[data-layout="ide"] #mainContent .card .script-preview,html[data-layout="ide"] #mainContent .card div[style*="JetBrains Mono"]{font-size:12px!important;color:var(--tx2)!important}
+/* Linhas: duas linhas de altura fixa (nome, pasta e data em cima, SQL embaixo) para a paginacao "cabe na tela" continuar exata. */
+html[data-layout="ide"] #mainContent .script-list .card{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,auto) auto;grid-template-rows:20px 18px;column-gap:16px;row-gap:3px;align-content:center;height:var(--ide-row-h);padding:0 84px 0 22px!important}
+html[data-layout="ide"] #mainContent .script-list .card>div:nth-child(2){grid-column:1;grid-row:1;min-width:0;margin:0!important;padding-right:0!important;align-items:center!important}
+html[data-layout="ide"] #mainContent .script-list .card>div:nth-child(2)+div:not([style*="JetBrains Mono"]){grid-column:2;grid-row:1;display:block!important;max-width:28ch;margin:0!important;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:11px/20px 'JetBrains Mono',monospace!important;color:var(--tx2)!important}
+html[data-layout="ide"] #mainContent .script-list .card>div:nth-child(2)+div:not([style*="JetBrains Mono"]) svg{vertical-align:-1px;margin-right:4px}
+html[data-layout="ide"] #mainContent .script-list .card div[style*="JetBrains Mono"]{grid-column:1/-1;grid-row:2;display:block;height:18px;min-height:0!important;max-height:none!important;margin:0!important;line-height:18px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-layout="ide"] #mainContent .script-list .card div[style*="JetBrains Mono"]+div{grid-column:3;grid-row:1;gap:12px;justify-content:flex-end!important;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:11px!important;color:var(--tx2)!important}
+html[data-layout="ide"] #mainContent .script-list .script-tags{display:none}
+html[data-layout="ide"] #mainContent .script-list .script-card-actions{top:50%;right:12px;transform:translateY(-50%)}
+/* Tabela */
+html[data-layout="ide"] #mainContent .script-table .card{height:40px;padding:0 12px 0 22px!important;gap:14px}
+html[data-layout="ide"] #mainContent .script-table .card-bar{top:10px;bottom:10px}
+html[data-layout="ide"] #mainContent .script-table .card>div:nth-child(2){align-items:center!important}
+html[data-layout="ide"] #mainContent .script-table .card div[style*="JetBrains Mono"]{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:18px;line-height:18px!important}
+html[data-layout="ide"] #mainContent .script-table .card>div:nth-child(2)+div:not([style*="JetBrains Mono"]){margin:0!important;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block!important;font:11px 'JetBrains Mono',monospace!important;color:var(--tx2)!important}
+html[data-layout="ide"] #mainContent .script-table .card div[style*="JetBrains Mono"]+div{font-family:'JetBrains Mono',monospace;font-size:11px!important;color:var(--tx2)!important;gap:10px}
+/* Blocos */
+html[data-layout="ide"] #mainContent .script-grid .card{border:1px solid var(--bdr);border-radius:6px;background:var(--bg2);box-shadow:none;padding:14px 14px 14px 18px}
+html[data-layout="ide"] #mainContent .script-grid .card:hover{background:var(--bg3);border-color:var(--bdr2);box-shadow:none}
+html[data-layout="ide"] #mainContent .script-grid .card[aria-current="true"]{background:var(--ide-sel);border-color:var(--acc);box-shadow:none}
+html[data-layout="ide"] #mainContent .script-grid .card-bar{top:0;bottom:0;left:0;border-radius:6px 0 0 6px}
+html[data-layout="ide"] #mainContent .script-grid .card div[style*="JetBrains Mono"]+div{font-family:'JetBrains Mono',monospace;color:var(--tx2)!important}
+/* Favoritar e fixar: aparecem no hover, no foco e na selecao; se ja estao ligados, ficam sempre visiveis. */
+html[data-layout="ide"] #mainContent .script-card-actions .icon-btn{background:transparent;border:0;color:var(--tx2);opacity:0}
+html[data-layout="ide"] #mainContent .script-card-actions .icon-btn.is-active{opacity:1;color:var(--acc);background:transparent}
+html[data-layout="ide"] #mainContent .card:hover .script-card-actions .icon-btn,html[data-layout="ide"] #mainContent .card:focus-within .script-card-actions .icon-btn,html[data-layout="ide"] #mainContent .card[aria-current="true"] .script-card-actions .icon-btn{opacity:1}
+html[data-layout="ide"] #mainContent .script-card-actions .icon-btn:hover{background:var(--bg4);color:var(--tx0)}
+html[data-layout="ide"] #mainContent>.script-pagination{flex:0 0 auto;margin:0!important;padding:6px 12px;gap:4px;justify-content:flex-end;border-top:1px solid var(--bdr);background:var(--bg0)}
+html[data-layout="ide"] .script-pagination .btn{height:26px;min-width:28px;padding:0 6px;border-radius:4px;font:12px 'JetBrains Mono',monospace}
+html[data-layout="ide"] .script-pagination .is-current{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+html[data-layout="ide"] .script-pagination span[data-gap]{color:var(--tx2);font-family:'JetBrains Mono',monospace}
+/* Vazio e carregando */
+html[data-layout="ide"] #mainContent>.empty-state{flex:1;padding:48px 24px}
+html[data-layout="ide"] #mainContent>.empty-state svg[style*="opacity:.15"]{opacity:.35!important;color:var(--tx3)}
+html[data-layout="ide"] .ide-empty-hint{font:12px 'JetBrains Mono',monospace;color:var(--tx2);margin-top:4px}
+html[data-layout="ide"] .ide-skel{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+html[data-layout="ide"] .ide-skel-row{flex:0 0 var(--ide-row-h);display:flex;flex-direction:column;justify-content:center;gap:9px;padding:0 84px 0 22px;box-shadow:0 1px 0 var(--bdr)}
+html[data-layout="ide"] .ide-skel-bar{height:9px;border-radius:3px;background:linear-gradient(90deg,var(--bg3) 0%,var(--bg4) 50%,var(--bg3) 100%);background-size:200% 100%;animation:ideShimmer 1.2s linear infinite}
+@keyframes ideShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+
+/* ===== Painel de previa (coluna fixa a direita) ===== */
+html[data-layout="ide"] #idePreviewSlot{flex:0 0 var(--ide-preview-w);width:var(--ide-preview-w);min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;border-left:1px solid var(--bdr);background:var(--bg1);color:var(--tx2)}
+html[data-layout="ide"] #idePreviewSlot svg{color:var(--tx3);opacity:.6}
+html[data-layout="ide"] .ide-pv-title{font-size:14px;font-weight:600;color:var(--tx1)}
+html[data-layout="ide"] .ide-pv-hint{font-size:12px;line-height:1.6}
+html[data-layout="ide"][data-ide-preview="off"] #idePreviewSlot{display:none}
+@media(max-width:1099px){html[data-layout="ide"] #idePreviewSlot{display:none}}
+html[data-layout="ide"] #modalOvl.is-docked{inset:var(--ide-header-h) 0 var(--ide-status-h) auto;width:var(--ide-preview-w);background:transparent;z-index:30;align-items:stretch;justify-content:stretch;transition:opacity .16s}
+html[data-layout="ide"] #modalOvl.is-docked .modal{width:100%;max-width:none;height:100%;max-height:none;border:0;border-left:1px solid var(--bdr);border-radius:0;box-shadow:none;background:var(--bg1);transform:translateX(6px);transition:transform .16s ease-out}
+html[data-layout="ide"] #modalOvl.is-docked.active .modal{transform:none}
+html[data-layout="ide"] #modalOvl.is-docked .modal-head{min-height:44px;padding:6px 8px 6px 14px}
+html[data-layout="ide"] #modalOvl.is-docked .modal-head span[style*="font-size:16px"]{font-size:14px!important}
+html[data-layout="ide"] #modalOvl.is-docked .modal-head svg[width="18"]{width:16px;height:16px}
+html[data-layout="ide"] #modalOvl.is-docked .modal-body{padding:12px 14px}
+html[data-layout="ide"] #modalOvl.is-docked .modal-foot{padding:8px 14px;gap:6px;flex-wrap:wrap}
+html[data-layout="ide"] #modalOvl.is-docked #mFoot>button.btn[onclick="closeModal()"],html[data-layout="ide"] #modalOvl.is-docked #mFoot>[data-v="close"]{display:none}
+html[data-layout="ide"] #modalOvl.is-docked .view-meta{margin-bottom:10px!important}
+
+/* ===== Modais, campos, botoes ===== */
+html[data-layout="ide"] .modal{border-radius:8px;background:var(--bg2);border-color:var(--bdr2)}
+html[data-layout="ide"] .modal.modal-fs{border-radius:0;border:0}
+html[data-layout="ide"] .modal-head{padding:10px 16px}
+html[data-layout="ide"] .modal-body{padding:16px}
+html[data-layout="ide"] .modal-foot{padding:10px 16px}
+html[data-layout="ide"] #codeView{background:var(--ide-code)!important;border-color:var(--bdr)!important;border-radius:6px!important;padding:12px 14px!important}
+html[data-layout="ide"] .view-meta{gap:6px}
+html[data-layout="ide"] .view-meta-item{padding:2px 8px;border-radius:4px;background:var(--bg2);border-color:var(--bdr);color:var(--tx1);font:11px/18px 'JetBrains Mono',monospace}
+html[data-layout="ide"] .ide-tags-chip{color:var(--acc)}
+html[data-layout="ide"] .btn{border-radius:6px;padding:5px 12px;background:var(--bg3);border-color:var(--bdr2);color:var(--tx0)}
+html[data-layout="ide"] .btn:hover{background:var(--bg4);border-color:var(--bdr2)}
+html[data-layout="ide"] .btn-sm{padding:3px 10px;font-size:12px;border-radius:5px}
+html[data-layout="ide"] .btn-accent{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+html[data-layout="ide"] .btn-accent:hover{background:var(--acc2);border-color:var(--acc2)}
+html[data-layout="ide"] .btn-ghost{background:transparent;border-color:transparent;color:var(--tx1)}
+html[data-layout="ide"] .btn-ghost:hover{background:var(--bg3);color:var(--tx0)}
+html[data-layout="ide"] .btn-danger{background:transparent;border-color:var(--red);color:var(--red)}
+html[data-layout="ide"] .btn-danger:hover{background:var(--red);color:var(--on-red)}
+html[data-layout="ide"] .btn:disabled{opacity:.55;cursor:default}
+html[data-layout="ide"] .icon-btn{color:var(--tx2)}
+html[data-layout="ide"] .icon-btn:hover{background:var(--bg4);color:var(--tx0)}
+html[data-layout="ide"] .inp{border-radius:4px;border-color:var(--ide-ctl-bdr);background-color:var(--bg0)}
+html[data-layout="ide"] .inp:focus{border-color:var(--ide-focus);box-shadow:0 0 0 1px var(--ide-focus)}
+html[data-layout="ide"] .code-edit{border-radius:6px;border-color:var(--ide-ctl-bdr);background:var(--ide-code)}
+html[data-layout="ide"] .code-edit:focus{border-color:var(--ide-focus);box-shadow:0 0 0 1px var(--ide-focus)}
+html[data-layout="ide"] .label{font-size:11px;letter-spacing:.06em;color:var(--tx1)}
+html[data-layout="ide"] .set-card{border-radius:6px}
+html[data-layout="ide"] .acct-avatar{color:var(--on-acc)}
+html[data-layout="ide"] .confirm-box{border-radius:8px;border-color:var(--bdr2)}
+html[data-layout="ide"] .ctx-menu{min-width:200px;padding:4px;border-radius:6px;background:var(--bg2);border-color:var(--bdr2)}
+html[data-layout="ide"] .ctx-item{padding:6px 10px;border-radius:4px;color:var(--tx0)}
+html[data-layout="ide"] .ctx-item:hover,html[data-layout="ide"] .ctx-item:focus{background:var(--ide-sel);color:var(--tx0)}
+html[data-layout="ide"] .ctx-item.danger{color:var(--red)}
+html[data-layout="ide"] .ctx-item.danger:hover,html[data-layout="ide"] .ctx-item.danger:focus{background:var(--red-bg)}
+html[data-layout="ide"] .toast-container{bottom:calc(var(--ide-status-h) + 12px);right:16px}
+html[data-layout="ide"] .toast{background:var(--bg2)!important;color:var(--tx0)!important;border:1px solid var(--bdr2)!important;border-left:3px solid var(--acc)!important;border-radius:6px;padding:10px 14px}
+html[data-layout="ide"] .toast-success{border-left-color:var(--grn)!important}
+html[data-layout="ide"] .toast-error{border-left-color:var(--red)!important}
+/* Sintaxe SQL (contraste >= 4,6:1 no fundo do codigo, da lista e da selecao) */
+html[data-layout="ide"][data-theme="dark"] .sql-kw{color:#6cb6ff;font-weight:600}
+html[data-layout="ide"][data-theme="dark"] .sql-str{color:#8fd694}
+html[data-layout="ide"][data-theme="dark"] .sql-num{color:#f2b36f}
+html[data-layout="ide"][data-theme="dark"] .sql-fn{color:#d2a8ff}
+html[data-layout="ide"][data-theme="dark"] .sql-cmt{color:#a0a8b3}
+html[data-layout="ide"][data-theme="light"] .sql-kw{color:#0550ae;font-weight:600}
+html[data-layout="ide"][data-theme="light"] .sql-str{color:#116329}
+html[data-layout="ide"][data-theme="light"] .sql-num{color:#953800}
+html[data-layout="ide"][data-theme="light"] .sql-fn{color:#6639ba}
+html[data-layout="ide"][data-theme="light"] .sql-cmt{color:#5f6b77}
+
+/* ===== Barra de status ===== */
+html[data-layout="ide"] #ideStatus{display:flex;align-items:stretch;min-width:0;padding:0 4px;background:var(--ide-act);border-top:1px solid var(--bdr);font-size:12px;color:var(--tx1);white-space:nowrap;overflow:hidden}
+html[data-layout="ide"] .ide-st{display:inline-flex;align-items:center;gap:6px;min-width:0;height:100%;padding:0 10px;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;white-space:nowrap}
+html[data-layout="ide"] button.ide-st{cursor:pointer}
+html[data-layout="ide"] button.ide-st:hover{background:var(--bg3);color:var(--tx0)}
+html[data-layout="ide"] button.ide-st:focus-visible{outline-offset:-2px}
+html[data-layout="ide"] .ide-st[aria-disabled="true"]{cursor:default}
+html[data-layout="ide"] .ide-st[aria-disabled="true"]:hover{background:transparent;color:inherit}
+html[data-layout="ide"] .ide-st-ctx{flex:0 1 auto;overflow:hidden}
+html[data-layout="ide"] .ide-st-ctx>span{overflow:hidden;text-overflow:ellipsis}
+html[data-layout="ide"] .ide-st-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx2)}
+html[data-layout="ide"] .ide-st-spacer{flex:1 1 auto}
+html[data-layout="ide"] .ide-st-text{overflow:hidden;text-overflow:ellipsis}
+
+/* ===== Paleta de comandos ===== */
+html[data-layout="ide"] #idePalette{position:fixed;inset:0;z-index:160;display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px;background:var(--ovl)}
+html[data-layout="ide"] #idePalette[hidden]{display:none}
+html[data-layout="ide"] .ide-pal{width:min(640px,100%);max-height:min(560px,76vh);display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shd2);animation:idePalIn .12s ease-out}
+@keyframes idePalIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+html[data-layout="ide"] .ide-pal-in{display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border-bottom:1px solid var(--bdr);color:var(--tx2)}
+html[data-layout="ide"] #idePalInput{flex:1;min-width:0;height:100%;border:0;outline:none;background:transparent;color:var(--tx0);font-size:14px}
+html[data-layout="ide"] #idePalInput::placeholder{color:var(--tx3)}
+html[data-layout="ide"] #idePalList{flex:1;min-height:0;overflow-y:auto;padding:4px 0}
+html[data-layout="ide"] .ide-pal-gl{padding:8px 14px 4px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2)}
+html[data-layout="ide"] .ide-pal-opt{display:flex;align-items:center;gap:10px;height:34px;padding:0 14px;cursor:pointer;color:var(--tx0)}
+html[data-layout="ide"] .ide-pal-opt:hover{background:var(--bg3)}
+html[data-layout="ide"] .ide-pal-opt[aria-selected="true"]{background:var(--ide-sel);box-shadow:inset 2px 0 0 var(--acc)}
+html[data-layout="ide"] .ide-pal-ico{flex:0 0 16px;width:16px;display:inline-flex;justify-content:center;color:var(--tx2)}
+html[data-layout="ide"] .ide-pal-lbl{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-layout="ide"] .ide-pal-sub{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:11px 'JetBrains Mono',monospace;color:var(--tx2)}
+html[data-layout="ide"] .ide-pal-opt mark{background:transparent;color:var(--acc);font-weight:700}
+html[data-layout="ide"] .ide-pal-empty{padding:12px 14px 6px;color:var(--tx2)}
+html[data-layout="ide"] .ide-pal-hint{padding:7px 14px;border-top:1px solid var(--bdr);font:11px 'JetBrains Mono',monospace;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== Ajuda de atalhos ===== */
+html[data-layout="ide"] .ide-kb{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+html[data-layout="ide"] .ide-kb caption{text-align:left;padding:14px 0 6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2)}
+html[data-layout="ide"] .ide-kb th,html[data-layout="ide"] .ide-kb td{padding:6px 8px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--bdr)}
+html[data-layout="ide"] .ide-kb th{width:38%;font-weight:400;white-space:nowrap}
+html[data-layout="ide"] .ide-kb td{color:var(--tx1)}
+html[data-layout="ide"] .ide-kb .ide-kbd+.ide-kbd{margin-left:4px}
+
+/* ===== Telas pequenas e toque ===== */
+@media(pointer:coarse){
+  html[data-layout="ide"]{--ide-row-h:64px}
+  html[data-layout="ide"] .sidebar-item{height:44px}
+  html[data-layout="ide"] .ide-more,html[data-layout="ide"] #mainContent .script-card-actions .icon-btn{opacity:1}
+  html[data-layout="ide"] #mainContent .script-card-actions .icon-btn{width:36px;height:36px}
+  html[data-layout="ide"] .ide-pal-opt{height:44px}
+}
+@media(max-width:1279px){html[data-layout="ide"] #ideCmdBtn .ide-cmd-label{display:none}}
+@media(max-width:768px){
+  html[data-layout="ide"] #app{grid-template-columns:minmax(0,1fr);grid-template-areas:"header" "body" "status"}
+  html[data-layout="ide"] #ideActivity{display:none}
+  html[data-layout="ide"] #sidebar{height:calc(100dvh - var(--ide-header-h) - var(--ide-status-h))!important}
+  html[data-layout="ide"] #searchWrap{margin:0 2px!important}
+  html[data-layout="ide"] #ideCmdBtn,html[data-layout="ide"] .ide-search-kbd{display:none}
+  html[data-layout="ide"] #ideStatus button.ide-st:not(#ideStSync){display:none}
+  html[data-layout="ide"] #mainContent .script-list .card{padding-right:76px!important;grid-template-columns:minmax(0,1fr) auto}
+  html[data-layout="ide"] #mainContent .script-list .card>div:nth-child(2)+div:not([style*="JetBrains Mono"]){display:none!important}
+  html[data-layout="ide"] #mainContent .script-list .card div[style*="JetBrains Mono"]+div{grid-column:2}
+  html[data-layout="ide"] #mainContent .script-list .card div[style*="JetBrains Mono"]+div>span:last-child{display:none}
+}

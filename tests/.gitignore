@@ -1,0 +1,6 @@
+base/
+edge-*/
+cdp-profile*/
+shots/
+result.txt
+test/*.html

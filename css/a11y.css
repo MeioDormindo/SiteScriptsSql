@@ -1,0 +1,22 @@
+/* Acessibilidade comum aos dois layouts. Nada aqui muda a aparencia de quem usa mouse:
+   o anel de foco so aparece na navegacao por teclado (:focus-visible) e o resto fica fora da tela. */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.skip-link{position:absolute;left:8px;top:-200px;z-index:1000;padding:8px 14px;border-radius:8px;background:var(--bg2);color:var(--tx0);border:2px solid var(--focus-ring,var(--acc2));font-size:13px;font-weight:600;text-decoration:none}
+.skip-link:focus{top:8px}
+:focus-visible{outline:2px solid var(--focus-ring,var(--acc2));outline-offset:2px}
+/* Campos de texto mantem o destaque de borda que ja tinham. */
+.inp:focus-visible,.code-edit:focus-visible,#mainContent:focus-visible,#modalBox:focus-visible,#confirmBox:focus-visible{outline:none}
+/* Itens dentro de listas com rolagem: anel por dentro, para nao ser cortado. */
+.sidebar-item:focus-visible,.ctx-item:focus-visible,#codeView:focus-visible{outline-offset:-2px}
+.card [data-a11y-open]:focus-visible{outline-offset:1px}
+@supports selector(:has(a)){
+  .card:has([data-a11y-open]:focus-visible){outline:2px solid var(--focus-ring,var(--acc2));outline-offset:-2px}
+  .card [data-a11y-open]:focus-visible{outline:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
+}
+@media (forced-colors:active){
+  :focus-visible{outline-color:Highlight}
+  .sidebar-item.active,[aria-current="true"]{outline:2px solid Highlight;outline-offset:-2px}
+}

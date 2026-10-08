@@ -80,7 +80,8 @@
     if(status==='error')return tr('syncErrorStatus',{msg:Cloud.errorText(lastError)});
     return'';
   }
-  function setStatus(s,err){status=s;lastError=err||null;renderHeader();refreshPanels()}
+  function setStatus(s,err){status=s;lastError=err||null;renderHeader();refreshPanels();Core.emit('cloudStatus',s)}
+  Cloud.statusText=statusText;
   function renderHeader(){
     var btn=document.getElementById('accountBtn');if(!btn)return;
     if(!client){btn.style.display='none';return}
