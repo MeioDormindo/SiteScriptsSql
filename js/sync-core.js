@@ -148,31 +148,77 @@
   Core.setShadow=function(kind,e){shadow[keyOf(kind,e.id)]=fp(kind,e)};
   Core.dropShadow=function(key){delete shadow[key]};
 
-  /* Compara o estado atual com a sombra: quem mudou ganha modifiedAt e entra na fila; quem sumiu vira tombstone.
-     Cobre todos os pontos do app que alteram dados sem precisar mexer em cada um. */
-  function track(){
-    var t=Core.clock(),seen={},sync=S.data.sync||(S.data.sync={dirty:{}}),dirty=sync.dirty||(sync.dirty={}),bound=!!sync.userId;
-    KINDS.forEach(function(kind){listOf(kind).forEach(function(e){
+  /* ===== Retrato do ultimo salvamento (o que esta gravado no IndexedDB) =====
+     Copia a estrutura de cada entidade compartilhando as strings: como textos nao alterados continuam sendo a mesma
+     referencia, comparar o estado atual com o retrato e quase instantaneo mesmo com milhares de scripts grandes. */
+  var STORED=['script','folder','category'];
+  var pers={};
+  function snap(v){
+    if(Array.isArray(v))return v.map(snap);
+    if(v&&typeof v==='object'){var o={};Object.keys(v).forEach(function(k){o[k]=snap(v[k])});return o}
+    return v;
+  }
+  function same(a,b){
+    if(a===b)return true;
+    if(Array.isArray(a)){if(!Array.isArray(b)||a.length!==b.length)return false;for(var i=0;i<a.length;i++)if(!same(a[i],b[i]))return false;return true}
+    if(a&&b&&typeof a==='object'&&typeof b==='object'&&!Array.isArray(b)){
+      var ka=Object.keys(a),kb=Object.keys(b);if(ka.length!==kb.length)return false;
+      for(var j=0;j<ka.length;j++)if(!same(a[ka[j]],b[ka[j]]))return false;
+      return true;
+    }
+    return false;
+  }
+  function buildPers(){pers={};STORED.forEach(function(kind){listOf(kind).forEach(function(e){if(e&&e.id!=null)pers[keyOf(kind,e.id)]=snap(e)})})}
+  /* Lista o que mudou desde o ultimo salvamento: candidatos (novos ou alterados), removidos e o conjunto atual de chaves. */
+  function collect(){
+    var seen={},cands=[],dels=[];
+    STORED.forEach(function(kind){listOf(kind).forEach(function(e){
       if(!e||e.id==null)return;
       var key=keyOf(kind,e.id);if(seen[key])return;seen[key]=1;
-      var f=fp(kind,e),prev=shadow[key];
+      var p=pers[key];if(p===undefined||!same(p,e))cands.push({kind:kind,key:key,e:e});
+    })});
+    Object.keys(pers).forEach(function(key){if(!seen[key])dels.push(key)});
+    listOf('subscription').forEach(function(e){if(e&&e.id!=null)seen[keyOf('subscription',e.id)]=1});
+    return{seen:seen,cands:cands,dels:dels};
+  }
+
+  /* Para a nuvem: entre os candidatos, quem mudou em campo sincronizado ganha modifiedAt e entra na fila;
+     quem sumiu vira tombstone. Cobre todos os pontos do app que alteram dados sem precisar mexer em cada um. */
+  function trackChanges(c){
+    var t=Core.clock(),sync=S.data.sync||(S.data.sync={dirty:{}}),dirty=sync.dirty||(sync.dirty={}),bound=!!sync.userId;
+    function check(kind,e){
+      var key=keyOf(kind,e.id),f=fp(kind,e),prev=shadow[key];
       if(prev===f)return;
       if(prev===undefined){var tomb=findTomb(key);e.modifiedAt=tomb?later(t,tomb.at):t;if(tomb)dropTomb(key)}
       else e.modifiedAt=later(t,e.modifiedAt);
       shadow[key]=f;if(bound)dirty[key]=1;
-    })});
-    Object.keys(shadow).forEach(function(key){if(!seen[key]){addTomb(key,t);delete shadow[key];if(bound)dirty[key]=1}});
+    }
+    c.cands.forEach(function(x){check(x.kind,x.e)});
+    var subSeen={};
+    listOf('subscription').forEach(function(e){if(e&&e.id!=null&&!subSeen[e.id]){subSeen[e.id]=1;check('subscription',e)}});
+    Object.keys(shadow).forEach(function(key){if(!c.seen[key]){addTomb(key,t);delete shadow[key];if(bound)dirty[key]=1}});
   }
-  Core.track=track;
-  Core.saveRaw=function(){return dbSave(S.data)};
-  Core.persist=function(){if(Core.ready){try{track()}catch(e){console.error(e)}}return dbSave(S.data)};
+  /* Grava so os pacotes de scripts que mudaram, mais o registro principal (pastas, categorias, configuracoes, fila). */
+  function commitLocal(withTrack){
+    var c=collect();
+    if(withTrack)trackChanges(c);
+    c.cands.forEach(function(x){pers[x.key]=snap(x.e)});
+    c.dels.forEach(function(key){delete pers[key]});
+    return dbSaveDelta(S.data,c.cands.map(function(x){return x.key}).concat(c.dels));
+  }
+  function fullSave(){return dbSave(S.data).then(function(){buildPers()})}
+  Core.track=function(){trackChanges(collect())};
+  Core.saveRaw=function(){return Core.ready?commitLocal(false):dbSave(S.data)};
+  Core.persist=function(){return Core.ready?commitLocal(true):dbSave(S.data)};
   Core.dirtyCount=function(){return Object.keys((S.data.sync&&S.data.sync.dirty)||{}).length};
 
   var prevSave=window.save;
   window.save=function(){
     if(Core.lensDepth>0){console.warn('save() ignorado: lista compartilhada montada');return Promise.resolve()}
-    if(Core.ready){try{track()}catch(e){console.error(e)}}
-    return prevSave().then(function(){emit('saved')});
+    var p;
+    if(Core.ready){try{p=commitLocal(true)}catch(e){console.error(e);p=fullSave()}}
+    else p=prevSave();
+    return p.then(function(){emit('saved')});
   };
 
   /* O mergeData original casa scripts por nome: um script importado com o mesmo id de outro (renomeado) entraria duplicado.
@@ -195,7 +241,7 @@
     S.fileHandle=null;S.fileName=null;
     rebuildShadow();
     emit('reset',opts||{});
-    return dbSave(S.data);
+    return fullSave();
   };
   window.resetApplication=function(){
     var msg=t('resetConfirm');if(window.Cloud&&Cloud.isSignedIn&&Cloud.isSignedIn())msg+='<br><br>'+esc(t('accResetSignOut'));
@@ -278,7 +324,9 @@
     breakFolderCycles(S.data.folders);
   }
   Core.whenReady=(window.appReady||Promise.resolve()).then(function(){
+    var stored=window._dbFormat===2;
+    if(stored)buildPers();
     normalizeData();fixIds();pruneTombs();rebuildShadow();Core.ready=true;
-    return dbSave(S.data);
+    return stored?commitLocal(false):fullSave();
   }).then(function(){emit('ready');return true}).catch(function(e){console.error('sync-core: falha ao iniciar',e);return false});
 })();

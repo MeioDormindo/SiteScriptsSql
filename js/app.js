@@ -41,9 +41,48 @@ function renderHL(sql){
 
 var S={data:{scripts:[],folders:[],categories:[],settings:{remoteUrl:'',autoSync:false,lastSync:null,language:'pt',theme:'dark'}},filter:{folderId:null,categoryId:null,search:''},lang:'pt',theme:'dark',fileHandle:null,fileName:null};
 
-function openDB(){return new Promise(function(r,j){var req=indexedDB.open('SQLScriptMgrDB',1);req.onupgradeneeded=function(e){e.target.result.createObjectStore('d')};req.onsuccess=function(e){r(e.target.result)};req.onerror=function(e){j(e.target.error)}})}
-function dbLoad(){return openDB().then(function(db){return new Promise(function(r,j){var tx=db.transaction('d','readonly');var req=tx.objectStore('d').get('main');req.onsuccess=function(){r(req.result||null)};req.onerror=function(){j(req.error)}})})}
-function dbSave(d){return openDB().then(function(db){return new Promise(function(r,j){var tx=db.transaction('d','readwrite');tx.objectStore('d').put(d,'main');tx.oncomplete=function(){r()};tx.onerror=function(){j(tx.error)}})})}
+/* IndexedDB, formato 2: os scripts ficam divididos em 64 pacotes ('b:0'...'b:63', pelo hash do id) e 'main' guarda o resto
+   (pastas, categorias, configuracoes, fila de sincronizacao). Uma edicao regrava so o pacote do script alterado
+   (dbSaveDelta) e abrir o app le poucos registros. O formato 1 (tudo em 'main') ainda e lido e convertido. */
+var _dbp=null,DB_BUCKETS=64,DB_B='b:',DB_B_END='b:\uffff',_dbBucketOf={};
+function openDB(){
+  if(_dbp)return _dbp;
+  _dbp=new Promise(function(r,j){var req=indexedDB.open('SQLScriptMgrDB',1);req.onupgradeneeded=function(e){e.target.result.createObjectStore('d')};req.onsuccess=function(e){var db=e.target.result;db.onversionchange=function(){db.close();_dbp=null};db.onclose=function(){_dbp=null};r(db)};req.onerror=function(e){_dbp=null;j(e.target.error)}});
+  return _dbp;
+}
+function dbBucket(id){var b=_dbBucketOf[id];if(b!==undefined)return b;var h=2166136261,s=String(id);for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return _dbBucketOf[id]=(h>>>0)%DB_BUCKETS}
+function dbHead(d){var h={};Object.keys(d).forEach(function(k){if(k!=='scripts')h[k]=d[k]});h.format=2;h.savedAt=new Date().toISOString();return h}
+function dbLoad(){return openDB().then(function(db){return new Promise(function(r,j){
+  var tx=db.transaction('d','readonly'),st=tx.objectStore('d'),head=null,buckets=[];
+  st.get('main').onsuccess=function(e){head=e.target.result||null};
+  st.getAll(IDBKeyRange.bound(DB_B,DB_B_END)).onsuccess=function(e){buckets=e.target.result};
+  tx.oncomplete=function(){
+    if(!head){window._dbFormat=null;r(null);return}
+    if(head.format!==2){window._dbFormat=1;r(head);return}
+    window._dbFormat=2;
+    var d={};Object.keys(head).forEach(function(k){if(k!=='format'&&k!=='savedAt')d[k]=head[k]});
+    d.scripts=[];buckets.forEach(function(b){if(Array.isArray(b))Array.prototype.push.apply(d.scripts,b)});
+    r(d);
+  };
+  tx.onerror=function(){j(tx.error)};
+})})}
+function dbSave(d){return openDB().then(function(db){return new Promise(function(r,j){
+  var tx=db.transaction('d','readwrite'),st=tx.objectStore('d'),groups={};
+  st.delete(IDBKeyRange.bound(DB_B,DB_B_END));st.delete(IDBKeyRange.bound('e:','e:\uffff'));
+  (d.scripts||[]).forEach(function(s){if(s&&s.id!=null){var b=dbBucket(s.id);(groups[b]=groups[b]||[]).push(s)}});
+  Object.keys(groups).forEach(function(b){st.put(groups[b],DB_B+b)});
+  st.put(dbHead(d),'main');
+  tx.oncomplete=function(){window._dbFormat=2;r()};tx.onerror=function(){j(tx.error)};
+})})}
+/* keys: chaves alteradas ou removidas ('script:<id>', 'folder:<id>'...). Regrava so os pacotes dos scripts afetados. */
+function dbSaveDelta(d,keys){return openDB().then(function(db){return new Promise(function(r,j){
+  var tx=db.transaction('d','readwrite'),st=tx.objectStore('d'),groups={},any=false;
+  keys.forEach(function(k){if(k.indexOf('script:')===0){groups[dbBucket(k.slice(7))]=[];any=true}});
+  if(any)(d.scripts||[]).forEach(function(s){if(s&&s.id!=null){var g=groups[dbBucket(s.id)];if(g)g.push(s)}});
+  Object.keys(groups).forEach(function(b){if(groups[b].length)st.put(groups[b],DB_B+b);else st.delete(DB_B+b)});
+  st.put(dbHead(d),'main');
+  tx.oncomplete=function(){r()};tx.onerror=function(){j(tx.error)};
+})})}
 
 var hasFs='showSaveFilePicker' in window;
 function fsWrite(h,d){return h.createWritable().then(function(w){return w.write(d).then(function(){return w.close()})})}
